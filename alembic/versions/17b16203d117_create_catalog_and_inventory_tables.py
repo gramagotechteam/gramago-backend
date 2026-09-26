@@ -113,25 +113,30 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_product_images_product_id'), 'product_images', ['product_id'], unique=False)
     
-    op.create_index(
-    "uq_user_default_address",
-    "user_addresses",
-    ["user_id"],
-    unique=True,
-    postgresql_where=sa.text(
-        "is_default = true"
-    ),
-)
+    
+    
+    
+#     op.create_index(
+#     "uq_user_default_address",
+#     "user_addresses",
+#     ["user_id"],
+#     unique=True,
+#     postgresql_where=sa.text(
+#         "is_default = true"
+#     ),
+# )
 
-    op.create_index(
-        "uq_user_active_cart",
-        "carts",
-        ["user_id"],
-        unique=True,
-        postgresql_where=sa.text(
-            "status = 'ACTIVE'"
-        ),
-    )
+#     op.create_index(
+#         "uq_user_active_cart",
+#         "carts",
+#         ["user_id"],
+#         unique=True,
+#         postgresql_where=sa.text(
+#             "status = 'ACTIVE'"
+#         ),
+#     )
+
+
     # ### end Alembic commands ###
 
 
@@ -150,13 +155,13 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_categories_parent_id'), table_name='categories')
     op.drop_table('categories')
     
-    op.drop_index(
-    "uq_user_active_cart",
-    table_name="carts",
-)
+#     op.drop_index(
+#     "uq_user_active_cart",
+#     table_name="carts",
+# )
 
-    op.drop_index(
-        "uq_user_default_address",
-        table_name="user_addresses",
-    )
+#     op.drop_index(
+#         "uq_user_default_address",
+#         table_name="user_addresses",
+#     )
     # ### end Alembic commands ###
