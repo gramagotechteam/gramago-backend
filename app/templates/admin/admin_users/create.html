@@ -1,0 +1,254 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+Create Admin | GramaGo Admin
+{% endblock %}
+
+{% block page_title %}
+Create Admin
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Staggered Fade-in Animation */
+    .fade-up {
+        animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card Styling */
+    .form-card {
+        border: none;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    .form-card .card-header {
+        border-bottom: 1px solid #f3f4f6;
+        padding: 1.5rem 2rem;
+        background-color: #ffffff;
+    }
+    
+    .form-card .card-header strong {
+        font-size: 1.25rem;
+        color: #1f2937;
+        letter-spacing: -0.3px;
+    }
+
+    .form-card .card-body {
+        padding: 2rem;
+    }
+
+    /* Form Elements Enhancements */
+    .form-label {
+        font-weight: 500;
+        color: #4b5563;
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-control {
+        border-radius: 10px;
+        padding: 0.75rem 1.25rem;
+        border: 1px solid #d1d5db;
+        font-size: 1rem;
+        color: #374151;
+        background-color: #f9fafb;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .form-control:focus {
+        background-color: #ffffff;
+        border-color: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        outline: none;
+    }
+    
+    .form-text {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 0.4rem;
+    }
+
+    /* Custom Alert */
+    .custom-info-alert {
+        background-color: #f0f9ff;
+        border: none;
+        border-left: 4px solid #0ea5e9;
+        border-radius: 8px;
+        color: #0369a1;
+        padding: 1.25rem;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .custom-info-alert strong {
+        color: #0c4a6e;
+    }
+
+    /* Action Buttons */
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-success {
+        background-color: #10b981;
+        border-color: #10b981;
+        color: white;
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-success:hover, .btn-success:focus {
+        background-color: #059669;
+        border-color: #059669;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-light {
+        background-color: #f3f4f6;
+        border-color: #f3f4f6;
+        color: #4b5563;
+    }
+
+    .btn-light:hover {
+        background-color: #e5e7eb;
+        border-color: #e5e7eb;
+        color: #1f2937;
+    }
+</style>
+
+<div class="row justify-content-center">
+    
+    <!-- Changed to a more centralized layout for better focus on large screens -->
+    <div class="col-12 col-md-10 col-lg-8 col-xl-6">
+
+        <div class="card form-card fade-up">
+
+            <div class="card-header d-flex align-items-center gap-2">
+                <div class="p-2 bg-primary bg-opacity-10 rounded text-primary d-inline-flex">
+                    <i class="bi bi-person-plus-fill fs-5"></i>
+                </div>
+                <strong>New Administrator</strong>
+            </div>
+
+            <div class="card-body">
+
+                <form action="/admin/admin-users/create" method="post">
+
+                    <input
+                        type="hidden"
+                        name="_csrf_token"
+                        value="{{ csrf_token(request) }}"
+                    >
+
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-person text-muted"></i> Full Name
+                        </label>
+                        <input
+                            type="text"
+                            name="full_name"
+                            class="form-control"
+                            required
+                            autocomplete="name"
+                            placeholder="Enter full name"
+                        >
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-envelope text-muted"></i> Email Address
+                        </label>
+                        <input
+                            type="email"
+                            name="email"
+                            class="form-control"
+                            required
+                            autocomplete="email"
+                            placeholder="admin@example.com"
+                        >
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-telephone text-muted"></i> Phone Number
+                        </label>
+                        <input
+                            type="text"
+                            name="phone"
+                            class="form-control"
+                            required
+                            maxlength="15"
+                            autocomplete="tel"
+                            placeholder="+1 234 567 8900"
+                        >
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-shield-lock text-muted"></i> Password
+                        </label>
+                        <input
+                            type="password"
+                            name="password"
+                            class="form-control"
+                            required
+                            minlength="8"
+                            autocomplete="new-password"
+                            placeholder="Create a secure password"
+                        >
+                        <div class="form-text">
+                            <i class="bi bi-check2-circle text-success me-1"></i> Use at least 8 characters.
+                        </div>
+                    </div>
+
+                    <div class="custom-info-alert mb-4">
+                        <div class="d-flex gap-3">
+                            <i class="bi bi-info-circle-fill fs-4 mt-1"></i>
+                            <div>
+                                This page creates a normal <strong>ADMIN</strong> account.<br><br>
+                                <strong>SUPER_ADMIN</strong> accounts should not be created casually from the web panel due to elevated security privileges.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column flex-sm-row gap-3 mt-5">
+                        <button type="submit" class="btn btn-success btn-action flex-grow-1 justify-content-center">
+                            <i class="bi bi-check-lg"></i> Create Admin
+                        </button>
+
+                        <a href="/admin/admin-users" class="btn btn-light btn-action flex-grow-1 justify-content-center text-decoration-none">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </a>
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,332 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+My Profile | GramaGo Admin
+{% endblock %}
+
+{% block page_title %}
+My Profile
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Staggered Fade-in Animation */
+    .fade-up {
+        animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card Styling */
+    .card {
+        border: none;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    .card .card-header {
+        background-color: #ffffff;
+        border-bottom: 1px solid #f3f4f6;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .card .card-header strong {
+        font-size: 1.05rem;
+        color: #1f2937;
+        letter-spacing: -0.3px;
+        margin: 0;
+    }
+
+    .card .card-body {
+        padding: 1.75rem;
+    }
+
+    /* Form Controls */
+    .form-label {
+        font-weight: 500;
+        color: #4b5563;
+        font-size: 0.9rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .form-control {
+        border-radius: 10px 0 0 10px;
+        border: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+        padding: 0.6rem 1rem;
+        font-size: 0.95rem;
+        color: #374151;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        background-color: #ffffff;
+        border-color: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        outline: none;
+    }
+
+    .input-group .btn-outline-secondary {
+        border-radius: 0 10px 10px 0;
+        border: 1px solid #e5e7eb;
+        border-left: none;
+        color: #6b7280;
+        background-color: #f9fafb;
+        font-weight: 500;
+        padding: 0.6rem 1rem;
+        transition: all 0.2s;
+    }
+
+    .input-group .btn-outline-secondary:hover {
+        background-color: #f3f4f6;
+        color: #111827;
+        border-color: #e5e7eb;
+    }
+
+    /* Soft Badges */
+    .badge-soft {
+        padding: 0.4em 0.8em;
+        font-weight: 600;
+        font-size: 0.75rem;
+        letter-spacing: 0.3px;
+        border-radius: 6px;
+    }
+    .badge-soft-success { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .badge-soft-primary { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-soft-dark { background-color: #1f2937; color: #f9fafb; }
+    .badge-soft-danger { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+    .detail-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+        font-weight: 600;
+        margin-bottom: 0.2rem;
+        display: block;
+    }
+    
+    .detail-value {
+        font-size: 0.95rem;
+        color: #111827;
+        font-weight: 500;
+    }
+</style>
+
+<div class="row g-4">
+
+    <!-- ====================================== -->
+    <!-- Admin Information -->
+    <!-- ====================================== -->
+    <div class="col-lg-5 fade-up">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-person-badge text-success fs-5"></i>
+                <strong>Account Information</strong>
+            </div>
+
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3 mb-4 p-3 bg-light rounded-3 border">
+                    <div class="rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center text-success" style="width: 52px; height: 52px; border: 1px solid #e5e7eb;">
+                        <i class="bi bi-person-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <strong class="d-block text-dark fs-6">{{ admin.full_name }}</strong>
+                        <span class="small text-muted">{{ admin.email or admin.phone }}</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <span class="detail-label">Full Name</span>
+                    <div class="detail-value">{{ admin.full_name }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <span class="detail-label">Email Address</span>
+                    <div class="detail-value">{{ admin.email or '—' }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <span class="detail-label">Phone Number</span>
+                    <div class="detail-value">{{ admin.phone }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <span class="detail-label">Role</span>
+                    <div class="mt-1">
+                        {% if admin.role == "SUPER_ADMIN" %}
+                        <span class="badge-soft badge-soft-dark">
+                            <i class="bi bi-star-fill text-warning me-1"></i> Super Admin
+                        </span>
+                        {% else %}
+                        <span class="badge-soft badge-soft-primary">
+                            Admin
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <span class="detail-label">Account Status</span>
+                    <div class="mt-1">
+                        {% if admin.is_active %}
+                        <span class="badge-soft badge-soft-success d-inline-flex align-items-center gap-1">
+                            <span class="spinner-grow spinner-grow-sm bg-success" style="width: 6px; height: 6px;" aria-hidden="true"></span> Active
+                        </span>
+                        {% else %}
+                        <span class="badge-soft badge-soft-danger">
+                            <i class="bi bi-lock-fill me-1"></i> Inactive
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <span class="detail-label">Created Date</span>
+                    <div class="detail-value text-muted small">
+                        <i class="bi bi-calendar2 me-1"></i>{{ admin.created_at | india_time }}
+                    </div>
+                </div>
+
+                {% if admin.last_login_at %}
+                <div>
+                    <span class="detail-label">Last Login</span>
+                    <div class="detail-value text-muted small">
+                        <i class="bi bi-clock-history me-1"></i>{{ admin.last_login_at | india_time }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================================== -->
+    <!-- Change Password -->
+    <!-- ====================================== -->
+    <div class="col-lg-7 fade-up delay-1">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-shield-lock text-primary fs-5"></i>
+                <strong>Change Password</strong>
+            </div>
+
+            <div class="card-body">
+                <div class="alert alert-warning bg-warning bg-opacity-10 border-0 text-dark small mb-4 d-flex align-items-center gap-2" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+                    <span>For security reasons, you will be automatically logged out after successfully updating your password.</span>
+                </div>
+
+                <form action="/admin/profile/change-password" method="post">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token(request) }}">
+
+                    <!-- Current Password -->
+                    <div class="mb-3">
+                        <label class="form-label" for="currentPassword">Current Password</label>
+                        <div class="input-group">
+                            <input
+                                type="password"
+                                name="current_password"
+                                id="currentPassword"
+                                class="form-control"
+                                required
+                                autocomplete="current-password"
+                                placeholder="Enter current password"
+                            >
+                            <button
+                                type="button"
+                                class="btn btn-outline-secondary"
+                                onclick="togglePassword('currentPassword', this)"
+                            >
+                                <i class="bi bi-eye"></i> Show
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- New Password -->
+                    <div class="mb-3">
+                        <label class="form-label" for="newPassword">New Password</label>
+                        <div class="input-group">
+                            <input
+                                type="password"
+                                name="new_password"
+                                id="newPassword"
+                                class="form-control"
+                                minlength="8"
+                                required
+                                autocomplete="new-password"
+                                placeholder="Enter new password"
+                            >
+                            <button
+                                type="button"
+                                class="btn btn-outline-secondary"
+                                onclick="togglePassword('newPassword', this)"
+                            >
+                                <i class="bi bi-eye"></i> Show
+                            </button>
+                        </div>
+                        <div class="form-text">
+                            <i class="bi bi-check2-circle text-success me-1"></i> Use at least 8 characters.
+                        </div>
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="mb-4">
+                        <label class="form-label" for="confirmPassword">Confirm New Password</label>
+                        <div class="input-group">
+                            <input
+                                type="password"
+                                name="confirm_password"
+                                id="confirmPassword"
+                                class="form-control"
+                                minlength="8"
+                                required
+                                autocomplete="new-password"
+                                placeholder="Re-enter new password"
+                            >
+                            <button
+                                type="button"
+                                class="btn btn-outline-secondary"
+                                onclick="togglePassword('confirmPassword', this)"
+                            >
+                                <i class="bi bi-eye"></i> Show
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success px-4 py-2 fw-semibold shadow-sm d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-check-lg"></i> Change Password
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function togglePassword(inputId, button) {
+        const input = document.getElementById(inputId);
+        if (input.type === "password") {
+            input.type = "text";
+            button.innerHTML = '<i class="bi bi-eye-slash"></i> Hide';
+        } else {
+            input.type = "password";
+            button.innerHTML = '<i class="bi bi-eye"></i> Show';
+        }
+    }
+</script>
+{% endblock %}

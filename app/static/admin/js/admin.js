@@ -1,0 +1,1 @@
+console.log("GramaGo Admin loaded");

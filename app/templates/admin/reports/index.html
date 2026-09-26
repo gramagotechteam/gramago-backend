@@ -1,0 +1,459 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+Reports | GramaGo Admin
+{% endblock %}
+
+{% block page_title %}
+Business Reports
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Staggered Fade-in Animation */
+    .fade-up {
+        animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card Styling */
+    .dashboard-card {
+        border: none;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        height: 100%;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    }
+    .dashboard-card .card-body {
+        padding: 1.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        color: #6b7280;
+    }
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #111827;
+        letter-spacing: -0.5px;
+    }
+
+    /* Form Controls */
+    .form-select {
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+    .form-select:focus {
+        background-color: #ffffff;
+        border-color: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        outline: none;
+    }
+
+    /* Chart Wrappers */
+    .report-chart-wrapper {
+        position: relative;
+        height: 320px;
+        width: 100%;
+    }
+    .report-pie-wrapper {
+        position: relative;
+        height: 260px;
+        width: 100%;
+    }
+
+    /* Table Enhancements */
+    .table > :not(caption) > * > * {
+        padding: 1rem 1.25rem;
+        border-bottom-color: #f3f4f6;
+        vertical-align: middle;
+    }
+    .table thead th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+        background-color: #f9fafb;
+        border-bottom: none;
+    }
+</style>
+
+<!-- ====================================== -->
+<!-- Header -->
+<!-- ====================================== -->
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 fade-up">
+    <div>
+        <h5 class="mb-1 fw-bold text-dark">
+            Business Reports
+        </h5>
+        <small class="text-muted">
+            Sales, orders, payments and product performance analytics
+        </small>
+    </div>
+
+    <form
+        method="get"
+        action="/admin/reports"
+        class="d-flex gap-2 align-items-center"
+    >
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token(request) }}">
+
+        <select name="days" class="form-select">
+            <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 Days</option>
+            <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 Days</option>
+            <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 Days</option>
+            <option value="365" {% if days == 365 %}selected{% endif %}>Last 1 Year</option>
+        </select>
+
+        <button type="submit" class="btn btn-success px-3">
+            Apply
+        </button>
+    </form>
+</div>
+
+<!-- ====================================== -->
+<!-- KPI Cards -->
+<!-- ====================================== -->
+<div class="row g-3 mb-4 fade-up delay-1">
+    <div class="col-md-6 col-xl-4">
+        <div class="dashboard-card border-start border-4 border-success">
+            <div class="card-body">
+                <div class="stat-label mb-1">Total Revenue</div>
+                <h3 class="stat-value mt-1 mb-0 text-success">₹{{ summary.total_revenue }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="dashboard-card border-start border-4 border-primary">
+            <div class="card-body">
+                <div class="stat-label mb-1">Total Orders</div>
+                <h3 class="stat-value mt-1 mb-0">{{ summary.total_orders }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="dashboard-card border-start border-4 border-info">
+            <div class="card-body">
+                <div class="stat-label mb-1">Today's Revenue</div>
+                <h3 class="stat-value mt-1 mb-0">₹{{ today_revenue }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="dashboard-card border-start border-4 border-secondary">
+            <div class="card-body">
+                <div class="stat-label mb-1">Average Order Value</div>
+                <h3 class="stat-value mt-1 mb-0">₹{{ average_order_value }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="dashboard-card border-start border-4 border-warning">
+            <div class="card-body">
+                <div class="stat-label mb-1">Delivery Success Rate</div>
+                <h3 class="stat-value mt-1 mb-0">{{ delivery_success_rate }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="dashboard-card border-start border-4 border-success">
+            <div class="card-body">
+                <div class="stat-label mb-1">Today's Delivered Orders</div>
+                <h3 class="stat-value mt-1 mb-0">{{ today_orders }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================== -->
+<!-- Secondary KPI -->
+<!-- ====================================== -->
+<div class="row g-3 mb-4 fade-up delay-2">
+    <div class="col-md-4">
+        <div class="card dashboard-card bg-success bg-opacity-10 border-0">
+            <div class="card-body">
+                <span class="stat-label text-success">Delivered Orders</span>
+                <h4 class="mt-2 mb-0 text-success fw-bold">{{ summary.delivered_orders }}</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card dashboard-card bg-danger bg-opacity-10 border-0">
+            <div class="card-body">
+                <span class="stat-label text-danger">Cancelled Orders</span>
+                <h4 class="mt-2 mb-0 text-danger fw-bold">{{ summary.cancelled_orders }}</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card dashboard-card bg-warning bg-opacity-10 border-0">
+            <div class="card-body">
+                <span class="stat-label text-warning">Delivery Failed</span>
+                <h4 class="mt-2 mb-0 text-warning fw-bold">{{ summary.failed_orders }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================== -->
+<!-- Sales Chart -->
+<!-- ====================================== -->
+<div class="card mb-4 fade-up delay-3">
+    <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
+        <strong class="text-dark"><i class="bi bi-graph-up text-success me-1"></i> Daily Sales Performance</strong>
+        <small class="text-muted">Last {{ days }} days</small>
+    </div>
+    <div class="card-body p-4">
+        <div class="report-chart-wrapper">
+            <canvas id="salesChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================== -->
+<!-- Status Charts -->
+<!-- ====================================== -->
+<div class="row g-4 mb-4 fade-up delay-3">
+    <div class="col-lg-6">
+        <div class="card dashboard-card h-100">
+            <div class="card-header bg-white py-3 px-4">
+                <strong class="text-dark"><i class="bi bi-pie-chart text-primary me-1"></i> Order Status Distribution</strong>
+            </div>
+            <div class="card-body p-4 d-flex align-items-center justify-content-center">
+                <div class="report-pie-wrapper">
+                    <canvas id="orderStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card dashboard-card h-100">
+            <div class="card-header bg-white py-3 px-4">
+                <strong class="text-dark"><i class="bi bi-wallet2 text-success me-1"></i> Payment Status Distribution</strong>
+            </div>
+            <div class="card-body p-4 d-flex align-items-center justify-content-center">
+                <div class="report-pie-wrapper">
+                    <canvas id="paymentStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================== -->
+<!-- Top Products -->
+<!-- ====================================== -->
+<div class="card dashboard-card fade-up delay-3">
+    <div class="card-header bg-white py-3 px-4">
+        <strong class="text-dark"><i class="bi bi-trophy text-warning me-1"></i> Top Selling Products</strong>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">Rank</th>
+                    <th>Product</th>
+                    <th>Quantity Sold</th>
+                    <th class="text-end">Revenue</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for product in top_products %}
+                <tr>
+                    <td>
+                        <span class="badge bg-light text-dark border font-monospace">
+                            #{{ loop.index }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if product.product_id %}
+                        <a href="/admin/products/{{ product.product_id }}/edit" class="text-decoration-none fw-semibold text-dark hover-success">
+                            {{ product.product_name }}
+                        </a>
+                        {% else %}
+                        <span class="fw-semibold text-dark">{{ product.product_name }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="fw-medium text-secondary">{{ product.quantity_sold }}</span>
+                    </td>
+                    <td class="text-end fw-bold text-success">
+                        ₹{{ product.revenue }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center py-5">
+                        <div class="d-flex flex-column align-items-center justify-content-center text-muted">
+                            <i class="bi bi-bar-chart fs-3 mb-2 opacity-50"></i>
+                            <p class="mb-0 small">No delivered sales data available yet.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // ==========================================
+    // Daily Sales Data
+    // ==========================================
+    const dailySales = {{ daily_sales | tojson }};
+    const salesLabels = dailySales.map(item => item.date);
+    const salesRevenue = dailySales.map(item => item.revenue);
+    const salesOrders = dailySales.map(item => item.orders);
+
+    const salesElement = document.getElementById("salesChart");
+    if (salesElement) {
+        new Chart(salesElement, {
+            type: "line",
+            data: {
+                labels: salesLabels,
+                datasets: [
+                    {
+                        label: "Revenue (₹)",
+                        data: salesRevenue,
+                        borderColor: "#10b981",
+                        backgroundColor: "rgba(16, 185, 129, 0.05)",
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointBackgroundColor: "#10b981"
+                    },
+                    {
+                        label: "Orders",
+                        data: salesOrders,
+                        borderColor: "#3b82f6",
+                        backgroundColor: "transparent",
+                        borderWidth: 2,
+                        tension: 0.35,
+                        pointRadius: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: "index",
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        position: "top",
+                        labels: { boxWidth: 12, font: { family: 'Inter', size: 12 } }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f3f4f6' },
+                        ticks: { font: { family: 'Inter', size: 11 } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { family: 'Inter', size: 11 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // ==========================================
+    // Order Status
+    // ==========================================
+    const orderStatuses = {{ order_status_data | tojson }};
+    const orderStatusElement = document.getElementById("orderStatusChart");
+    if (orderStatusElement) {
+        new Chart(orderStatusElement, {
+            type: "doughnut",
+            data: {
+                labels: orderStatuses.map(item => item.status.replaceAll("_", " ").toLowerCase().replace(/\b\w/g, l => l.toUpperCase())),
+                datasets: [{
+                    data: orderStatuses.map(item => item.count),
+                    backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b', '#ef4444', '#14b8a6']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: { boxWidth: 10, font: { family: 'Inter', size: 11 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // ==========================================
+    // Payment Status
+    // ==========================================
+    const paymentStatuses = {{ payment_status_data | tojson }};
+    const paymentStatusElement = document.getElementById("paymentStatusChart");
+    if (paymentStatusElement) {
+        new Chart(paymentStatusElement, {
+            type: "doughnut",
+            data: {
+                labels: paymentStatuses.map(item => item.status.toLowerCase().replace(/\b\w/g, l => l.toUpperCase())),
+                datasets: [{
+                    data: paymentStatuses.map(item => item.count),
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#64748b']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: { boxWidth: 10, font: { family: 'Inter', size: 11 } }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

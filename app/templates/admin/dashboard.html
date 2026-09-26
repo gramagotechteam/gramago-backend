@@ -1,0 +1,482 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+Dashboard | GramaGo Admin
+{% endblock %}
+
+{% block page_title %}
+Dashboard
+{% endblock %}
+
+{% block content %}
+
+<!-- Custom Styles for Dashboard -->
+<style>
+    /* Staggered Fade-in Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* KPI Cards Styling */
+    .dashboard-card {
+        border: none;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .dashboard-card .card-body {
+        padding: 1.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Background decorative icons */
+    .card-bg-icon {
+        position: absolute;
+        right: -10px;
+        bottom: -15px;
+        font-size: 5rem;
+        opacity: 0.04;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        z-index: 1;
+    }
+
+    .dashboard-card:hover .card-bg-icon {
+        transform: scale(1.1) rotate(-5deg);
+        opacity: 0.08;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        color: #6b7280;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #111827;
+        letter-spacing: -0.5px;
+    }
+
+    /* Link wrapper fix */
+    .card-link-wrapper {
+        text-decoration: none !important;
+        color: inherit !important;
+        display: block;
+        height: 100%;
+    }
+
+    /* Table Enhancements */
+    .table-card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        overflow: hidden;
+    }
+
+    .table-card .card-header {
+        border-bottom: 1px solid #f3f4f6;
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .table-card .card-header strong {
+        font-size: 1.1rem;
+        color: #374151;
+    }
+
+    .table > :not(caption) > * > * {
+        padding: 1rem 1.5rem;
+        border-bottom-color: #f3f4f6;
+        color: #4b5563;
+    }
+
+    .table thead th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+        background-color: #f9fafb;
+    }
+    
+    .table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .order-link {
+        font-weight: 600;
+        color: #059669;
+        transition: color 0.2s ease;
+    }
+
+    .order-link:hover {
+        color: #047857;
+    }
+</style>
+
+<!-- KPI Cards First Row -->
+<div class="row g-4 mb-4 fade-up">
+
+    <!-- Customers Card -->
+    <div class="col-md-6 col-xl-3">
+        <a href="/admin/customers" class="card-link-wrapper">
+            <div class="card dashboard-card border-start border-4 border-primary">
+                <i class="bi bi-people-fill card-bg-icon text-primary"></i>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label mb-1">Customers</div>
+                            <h3 class="stat-value mt-1 mb-0">{{ summary.customers.total }}</h3>
+                        </div>
+                        <div class="p-2 bg-primary bg-opacity-10 rounded text-primary">
+                            <i class="bi bi-person fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Total Orders Card -->
+    <!-- Note: Corrected the a-tag class from 'btn btn-sm btn-outline-success' to 'card-link-wrapper' for layout stability -->
+    <div class="col-md-6 col-xl-3">
+        <a href="/admin/orders" class="card-link-wrapper">
+            <div class="card dashboard-card border-start border-4 border-success">
+                <i class="bi bi-box-seam card-bg-icon text-success"></i>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label mb-1">Total Orders</div>
+                            <h3 class="stat-value mt-1 mb-0">{{ summary.orders.total }}</h3>
+                        </div>
+                        <div class="p-2 bg-success bg-opacity-10 rounded text-success">
+                            <i class="bi bi-cart3 fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Pending Orders Card -->
+    <div class="col-md-6 col-xl-3">
+        <a href="/admin/orders?order_status=PLACED" class="card-link-wrapper">
+            <div class="card dashboard-card border-start border-4 border-warning">
+                <i class="bi bi-clock-history card-bg-icon text-warning"></i>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label mb-1">Pending Orders</div>
+                            <h3 class="stat-value mt-1 mb-0">{{ summary.orders.pending }}</h3>
+                        </div>
+                        <div class="p-2 bg-warning bg-opacity-10 rounded text-warning">
+                            <i class="bi bi-hourglass-split fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Low Stock Card -->
+    <div class="col-md-6 col-xl-3">
+        <a href="/admin/inventory?low_stock=true" class="card-link-wrapper">
+            <div class="card dashboard-card border-start border-4 border-danger">
+                <i class="bi bi-exclamation-triangle card-bg-icon text-danger"></i>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label mb-1">Low Stock</div>
+                            <h3 class="stat-value mt-1 mb-0">{{ summary.catalog.low_stock }}</h3>
+                        </div>
+                        <div class="p-2 bg-danger bg-opacity-10 rounded text-danger">
+                            <i class="bi bi-box2-fill fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+</div>
+
+<!-- Revenue KPI Cards Row -->
+<div class="row g-4 mb-4 fade-up delay-1">
+
+    <!-- Total Revenue -->
+    <div class="col-md-6">
+        <div class="card dashboard-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+            <i class="bi bi-graph-up-arrow card-bg-icon text-dark opacity-10"></i>
+            <div class="card-body py-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 bg-white rounded-circle shadow-sm text-dark">
+                        <i class="bi bi-currency-rupee fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label mb-1">Total Revenue</div>
+                        <h3 class="stat-value mt-1 mb-0">₹{{ summary.revenue.total }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Revenue -->
+    <div class="col-md-6">
+        <div class="card dashboard-card" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0;">
+            <i class="bi bi-wallet2 card-bg-icon text-success opacity-10"></i>
+            <div class="card-body py-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 bg-white rounded-circle shadow-sm text-success">
+                        <i class="bi bi-calendar2-check fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label mb-1 text-success opacity-75">Today's Revenue</div>
+                        <h3 class="stat-value mt-1 mb-0 text-success">₹{{ summary.revenue.today }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Commerce Settings Quick Action -->
+<div class="row g-4 mb-4 fade-up delay-2">
+
+    <div class="col-12">
+
+        <a
+            href="/admin/commerce-settings"
+            class="card-link-wrapper"
+        >
+
+            <div
+                class="card
+                       dashboard-card"
+                style="
+                    background:
+                    linear-gradient(
+                        135deg,
+                        #ecfdf5 0%,
+                        #ffffff 100%
+                    );
+
+                    border:
+                    1px solid #a7f3d0;
+                "
+            >
+
+                <i
+                    class="bi
+                           bi-sliders
+                           card-bg-icon
+                           text-success"
+                ></i>
+
+
+                <div class="card-body">
+
+                    <div
+                        class="d-flex
+                               justify-content-between
+                               align-items-center
+                               gap-3"
+                    >
+
+                        <div
+                            class="d-flex
+                                   align-items-center
+                                   gap-3"
+                        >
+
+                            <div
+                                class="p-3
+                                       bg-success
+                                       bg-opacity-10
+                                       rounded
+                                       text-success"
+                            >
+
+                                <i
+                                    class="bi
+                                           bi-sliders
+                                           fs-3"
+                                ></i>
+
+                            </div>
+
+
+                            <div>
+
+                                <div
+                                    class="stat-label
+                                           mb-1"
+                                >
+                                    Store Configuration
+                                </div>
+
+                                <h5
+                                    class="mb-1
+                                           fw-bold"
+                                >
+                                    Commerce Settings
+                                </h5>
+
+                                <div
+                                    class="text-muted
+                                           small"
+                                >
+                                    Configure minimum
+                                    order amount and
+                                    delivery fee.
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            class="text-success
+                                   fs-4"
+                        >
+                            <i
+                                class="bi
+                                       bi-chevron-right"
+                            ></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </a>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Recent Orders Table -->
+<div class="card table-card fade-up delay-2">
+
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <strong class="mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-card-list text-primary"></i>
+            Recent Orders
+        </strong>
+        <a href="/admin/orders" class="btn btn-sm btn-outline-secondary rounded-pill px-3 shadow-sm">
+            View All <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Status</th>
+                    <th>Payment</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for order in recent_orders %}
+                <tr>
+                    <td>
+                        <a href="/admin/orders/{{ order.id }}" class="text-decoration-none order-link">
+                            #{{ order.order_number }}
+                        </a>
+                    </td>
+                    <td>
+                        <!-- Using a softer badge style for better visuals -->
+                        <span class="badge bg-light text-dark border px-2 py-1 shadow-sm">
+                            {{ order.order_status }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-credit-card-2-front text-muted"></i>
+                            {{ order.payment_status }}
+                        </div>
+                    </td>
+                    <td class="fw-medium text-dark">
+                        ₹{{ order.total_amount }}
+                    </td>
+                    <td class="text-muted small">
+                        <i class="bi bi-calendar3 me-1"></i> {{ order.created_at }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-5">
+                        <div class="d-flex flex-column align-items-center justify-content-center">
+                            <i class="bi bi-inbox fs-2 mb-2 text-black-50"></i>
+                            <p class="mb-0">No orders available yet.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

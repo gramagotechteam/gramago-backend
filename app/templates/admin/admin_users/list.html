@@ -1,0 +1,344 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+Admin Users | GramaGo Admin
+{% endblock %}
+
+{% block page_title %}
+Admin Users
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Staggered Fade-in Animation */
+    .fade-up {
+        animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card Styling Enhancements */
+    .filter-card, .table-card {
+        border: none;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    /* Search Input Styling */
+    .search-input-group {
+        position: relative;
+    }
+    .search-input-group .form-control {
+        padding-left: 2.5rem;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+        transition: all 0.2s ease;
+    }
+    .search-input-group .form-control:focus {
+        background-color: #ffffff;
+        border-color: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    }
+    .search-input-group .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        z-index: 4;
+    }
+
+    /* Table Enhancements */
+    .table > :not(caption) > * > * {
+        padding: 1.25rem 1.5rem;
+        border-bottom-color: #f3f4f6;
+        vertical-align: middle;
+    }
+    .table thead th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+        background-color: #f9fafb;
+        border-bottom: none;
+    }
+    .table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    .table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    /* Custom Soft Badges */
+    .badge-soft {
+        padding: 0.4em 0.8em;
+        font-weight: 600;
+        font-size: 0.75rem;
+        letter-spacing: 0.3px;
+        border-radius: 6px;
+    }
+    .badge-soft-success { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .badge-soft-danger { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge-soft-warning { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge-soft-primary { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-soft-dark { background-color: #f3f4f6; color: #1f2937; border: 1px solid #e5e7eb; }
+
+    /* Action Buttons */
+    .btn-action {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 0.4rem 0.8rem;
+        transition: all 0.2s;
+    }
+</style>
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 fade-up">
+    <div class="d-flex align-items-center gap-3">
+        <div class="p-2 bg-success bg-opacity-10 rounded text-success d-none d-sm-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+            <i class="bi bi-people-fill fs-4"></i>
+        </div>
+        <div>
+            <h5 class="mb-1 fw-bold text-dark">
+                Admin User Management
+            </h5>
+            <small class="text-muted">
+                Manage GramaGo administrator accounts
+            </small>
+        </div>
+    </div>
+
+    <a href="/admin/admin-users/create" class="btn btn-success rounded-pill px-4 shadow-sm d-flex align-items-center justify-content-center gap-2">
+        <i class="bi bi-plus-lg"></i> Create Admin
+    </a>
+</div>
+
+<!-- Search -->
+<div class="card filter-card mb-4 fade-up delay-1">
+    <div class="card-body p-3 p-md-4">
+        <form method="get" action="/admin/admin-users" class="row g-3 align-items-center">
+            
+            <div class="col-12 col-md-8 col-lg-9">
+                <div class="search-input-group">
+                    <i class="bi bi-search search-icon"></i>
+                    <input
+                        type="text"
+                        name="search"
+                        class="form-control form-control-lg fs-6"
+                        placeholder="Search name, email or phone..."
+                        value="{{ search }}"
+                    >
+                </div>
+            </div>
+
+            <div class="col-12 col-md-4 col-lg-3 d-flex gap-2">
+                <button type="submit" class="btn btn-success flex-grow-1">
+                    Search
+                </button>
+                <a href="/admin/admin-users" class="btn btn-light px-3 border" title="Reset Filters">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+            
+        </form>
+    </div>
+</div>
+
+<!-- Admin Table -->
+<div class="card table-card fade-up delay-2">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Admin Details</th>
+                    <th>Contact Info</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Verification</th>
+                    <th>Date Created</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center text-secondary" style="width: 40px; height: 40px;">
+                                <i class="bi bi-person-fill fs-5"></i>
+                            </div>
+                            <div>
+                                <strong class="text-dark d-block mb-1">
+                                    {{ user.full_name }}
+                                </strong>
+                                <span class="badge bg-light text-secondary border border-secondary-subtle font-monospace">
+                                    ID #{{ user.id }}
+                                </span>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="text-dark fw-medium mb-1">
+                            <i class="bi bi-envelope text-muted me-1 small"></i> {{ user.email or '—' }}
+                        </div>
+                        <div class="text-muted small">
+                            <i class="bi bi-telephone text-muted me-1 small"></i> {{ user.phone }}
+                        </div>
+                    </td>
+
+                    <td>
+                        {% if user.role == "SUPER_ADMIN" %}
+                        <span class="badge-soft badge-soft-dark">
+                            <i class="bi bi-star-fill text-warning me-1"></i> Super Admin
+                        </span>
+                        {% else %}
+                        <span class="badge-soft badge-soft-primary">
+                            Admin
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if user.is_active %}
+                        <span class="badge-soft badge-soft-success d-inline-flex align-items-center gap-1">
+                            <span class="spinner-grow spinner-grow-sm bg-success" style="width: 6px; height: 6px;" aria-hidden="true"></span> Active
+                        </span>
+                        {% else %}
+                        <span class="badge-soft badge-soft-danger">
+                            <i class="bi bi-dash-circle me-1"></i> Inactive
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if user.is_verified %}
+                        <span class="badge-soft badge-soft-success">
+                            <i class="bi bi-check-circle-fill me-1"></i> Verified
+                        </span>
+                        {% else %}
+                        <span class="badge-soft badge-soft-warning">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Pending
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <td class="text-muted small">
+                        {{ user.created_at | india_time }}
+                    </td>
+
+                    <td class="text-end">
+                        {% if user.id == admin.id %}
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary border px-3 py-2 rounded-pill">
+                            Current User
+                        </span>
+                        {% else %}
+                            {% if user.is_active %}
+                            <form
+                                action="/admin/admin-users/{{ user.id }}/deactivate"
+                                method="post"
+                                class="d-inline"
+                                onsubmit="confirmDeactivation(event, this);"
+                            >
+                                <input
+                                    type="hidden"
+                                    name="_csrf_token"
+                                    value="{{ csrf_token(request) }}"
+                                >
+                                <button type="submit" class="btn btn-outline-danger btn-action">
+                                    <i class="bi bi-lock"></i> Deactivate
+                                </button>
+                            </form>
+                            {% else %}
+                            <form
+                                action="/admin/admin-users/{{ user.id }}/activate"
+                                method="post"
+                                class="d-inline"
+                            >
+                                <input
+                                    type="hidden"
+                                    name="_csrf_token"
+                                    value="{{ csrf_token(request) }}"
+                                >
+                                <button type="submit" class="btn btn-success btn-action">
+                                    <i class="bi bi-unlock"></i> Activate
+                                </button>
+                            </form>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <div class="d-flex flex-column align-items-center justify-content-center">
+                            <div class="p-3 bg-light rounded-circle mb-3 text-muted">
+                                <i class="bi bi-search fs-3"></i>
+                            </div>
+                            <h6 class="text-dark fw-bold">No admin users found</h6>
+                            <p class="text-muted small mb-0">Try adjusting your search filters.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Custom Confirmation Modal for Deactivation (Replaces browser confirm alert) -->
+<div class="modal fade" id="deactivateConfirmModal" tabindex="-1" aria-labelledby="deactivateConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title text-danger fw-bold d-flex align-items-center gap-2" id="deactivateConfirmModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill fs-4"></i> Confirm Deactivation
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4 text-dark">
+                Are you sure you want to deactivate this admin account? 
+                <br><br>
+                <span class="text-muted small">They will be immediately logged out and lose all access to the administrative panel. This action can be undone later by activating the account again.</span>
+            </div>
+            <div class="modal-footer border-top-0 pt-0">
+                <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger rounded-3 px-4" id="executeDeactivateBtn">Yes, Deactivate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let formToSubmit = null;
+    const deactivateModal = new bootstrap.Modal(document.getElementById('deactivateConfirmModal'));
+
+    // Intercept form submission
+    function confirmDeactivation(event, formElement) {
+        event.preventDefault(); // Stop standard form submission
+        formToSubmit = formElement; // Store the form reference
+        deactivateModal.show(); // Show custom modal
+    }
+
+    // Execute submission when confirmed inside modal
+    document.getElementById('executeDeactivateBtn').addEventListener('click', function() {
+        if (formToSubmit) {
+            formToSubmit.submit();
+        }
+    });
+</script>
+{% endblock %}

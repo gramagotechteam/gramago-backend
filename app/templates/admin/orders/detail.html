@@ -1,0 +1,508 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+{{ order.order_number }} | GramaGo Admin
+{% endblock %}
+
+{% block page_title %}
+Order Details
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Staggered Fade-in Animation */
+    .fade-up {
+        animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .detail-card {
+        border: none;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-card .card-header {
+        background-color: #ffffff;
+        border-bottom: 1px solid #f3f4f6;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .detail-card .card-header strong {
+        font-size: 1.05rem;
+        color: #1f2937;
+        letter-spacing: -0.3px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .kpi-card {
+        border: none;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        height: 100%;
+    }
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    }
+    .kpi-card .card-body {
+        padding: 1.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        color: #6b7280;
+    }
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #111827;
+        letter-spacing: -0.5px;
+    }
+
+    /* Form Controls */
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+        padding: 0.6rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+    .form-control:focus, .form-select:focus {
+        background-color: #ffffff;
+        border-color: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        outline: none;
+    }
+
+    /* Table Adjustments */
+    .table > :not(caption) > * > * {
+        padding: 1rem 1.25rem;
+        border-bottom-color: #f3f4f6;
+        vertical-align: middle;
+    }
+    .table thead th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+        background-color: #f9fafb;
+        border-bottom: none;
+    }
+
+    /* Soft Badges */
+    .badge-soft {
+        padding: 0.4em 0.8em;
+        font-weight: 600;
+        font-size: 0.75rem;
+        letter-spacing: 0.3px;
+        border-radius: 6px;
+    }
+    .badge-soft-success { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .badge-soft-warning { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge-soft-primary { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-soft-danger { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge-soft-secondary { background-color: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+    .badge-soft-dark { background-color: #1f2937; color: #f9fafb; }
+</style>
+
+{% if error %}
+<div class="alert alert-danger alert-dismissible fade show mb-4 fade-up" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<!-- ====================================== -->
+<!-- Header -->
+<!-- ====================================== -->
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 fade-up">
+    <div>
+        <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+            Order <span class="text-success font-monospace">#{{ order.order_number }}</span>
+        </h4>
+        <small class="text-muted d-flex align-items-center gap-1">
+            <i class="bi bi-calendar2"></i> Placed: {{ order.placed_at.strftime("%d %b %Y %I:%M %p") }}
+        </small>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+        <a href="/admin/orders/{{ order.id }}/print" target="_blank" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm d-inline-flex align-items-center gap-2 text-decoration-none">
+            <i class="bi bi-printer"></i> Print Order
+        </a>
+        <a href="/admin/orders" class="btn btn-light rounded-pill px-3 shadow-sm d-inline-flex align-items-center gap-2 text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Back to Orders
+        </a>
+    </div>
+</div>
+
+<!-- ====================================== -->
+<!-- Status cards -->
+<!-- ====================================== -->
+<div class="row g-3 mb-4 fade-up delay-1">
+    <div class="col-md-4">
+        <div class="card kpi-card border-start border-4 border-success">
+            <div class="card-body">
+                <div class="stat-label mb-1">Order Status</div>
+                <h5 class="stat-value mt-1 mb-0">
+                    {{ order.order_status.replace('_', ' ').title() }}
+                </h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card kpi-card border-start border-4 border-primary">
+            <div class="card-body">
+                <div class="stat-label mb-1">Payment Status</div>
+                <h5 class="stat-value mt-1 mb-0">
+                    {{ order.payment_status }}
+                </h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card kpi-card border-start border-4 border-warning">
+            <div class="card-body">
+                <div class="stat-label mb-1">Order Total</div>
+                <h5 class="stat-value mt-1 mb-0 text-success">
+                    ₹{{ order.total_amount }}
+                </h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- ====================================== -->
+    <!-- LEFT -->
+    <!-- ====================================== -->
+    <div class="col-lg-8 fade-up delay-2">
+
+        <!-- Items -->
+        <div class="card detail-card mb-4">
+            <div class="card-header">
+                <strong><i class="bi bi-box-seam text-success"></i> Ordered Items</strong>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items %}
+                        <tr>
+                            <td>
+                                <strong class="text-dark">{{ item.product_name }}</strong>
+                                <div class="small text-muted font-monospace">
+                                    {% if item.product_sku %}SKU: {{ item.product_sku }}<br>{% endif %}
+                                    {{ item.unit_value }} {{ item.unit }}
+                                </div>
+                            </td>
+                            <td>₹{{ item.unit_price }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td class="text-end fw-bold text-dark">₹{{ item.line_total }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card-body border-top bg-light bg-opacity-50">
+                <div class="row justify-content-end">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between mb-2 text-muted">
+                            <span>Subtotal</span>
+                            <strong class="text-dark">₹{{ order.subtotal }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2 text-muted">
+                            <span>Delivery Fee</span>
+                            <strong class="text-dark">₹{{ order.delivery_fee }}</strong>
+                        </div>
+                        {% if order.discount_amount > 0 %}
+                        <div class="d-flex justify-content-between mb-2 text-success">
+                            <span>Discount</span>
+                            <strong>- ₹{{ order.discount_amount }}</strong>
+                        </div>
+                        {% endif %}
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between text-dark">
+                            <span class="fw-bold">Total Amount</span>
+                            <strong class="fs-5 text-success">₹{{ order.total_amount }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delivery Address -->
+        <div class="card detail-card mb-4">
+            <div class="card-header">
+                <strong><i class="bi bi-geo-alt-fill text-primary"></i> Delivery Address</strong>
+            </div>
+            <div class="card-body p-4">
+                <h6 class="fw-bold text-dark mb-1">{{ order.delivery_full_name }}</h6>
+                <p class="text-muted small mb-2"><i class="bi bi-telephone me-1"></i> {{ order.delivery_phone }}</p>
+                <p class="mb-0 text-secondary small lh-base">
+                    {% if order.delivery_house_no %}{{ order.delivery_house_no }}, {% endif %}
+                    {% if order.delivery_street %}{{ order.delivery_street }}, {% endif %}
+                    {{ order.delivery_village_town }}<br>
+                    {% if order.delivery_mandal %}{{ order.delivery_mandal }}, {% endif %}
+                    {{ order.delivery_district }}, {{ order.delivery_state }} - <strong>{{ order.delivery_pincode }}</strong>
+                    {% if order.delivery_landmark %}
+                    <br><span class="text-primary mt-1 d-inline-block"><i class="bi bi-signpost-split me-1"></i> Landmark: {{ order.delivery_landmark }}</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- Status History -->
+        <div class="card detail-card">
+            <div class="card-header">
+                <strong><i class="bi bi-clock-history text-secondary"></i> Order History Timeline</strong>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Previous</th>
+                            <th>Note</th>
+                            <th>Changed By</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for history in order.status_history | sort(attribute='created_at', reverse=true) %}
+                        <tr>
+                            <td>
+                                <span class="badge badge-soft-success">
+                                    {{ history.to_status.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td class="text-muted small">
+                                {% if history.from_status %}{{ history.from_status.replace('_', ' ').title() }}{% else %}—{% endif %}
+                            </td>
+                            <td class="small text-secondary">{{ history.note or '—' }}</td>
+                            <td class="small text-muted">{% if history.changed_by %}User #{{ history.changed_by }}{% else %}System{% endif %}</td>
+                            <td class="small text-nowrap text-muted">{{ history.created_at.strftime("%d %b %Y %I:%M %p") }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4 small">No history available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ====================================== -->
+    <!-- RIGHT -->
+    <!-- ====================================== -->
+    <div class="col-lg-4 fade-up delay-3">
+
+        <!-- Customer -->
+        <div class="card detail-card mb-4">
+            <div class="card-header">
+                <strong><i class="bi bi-person-fill text-dark"></i> Customer</strong>
+            </div>
+            <div class="card-body p-4">
+                {% if customer %}
+                <h6 class="fw-bold text-dark mb-1">{{ customer.full_name }}</h6>
+                {% if customer.email %}<p class="text-muted small mb-1"><i class="bi bi-envelope me-1"></i> {{ customer.email }}</p>{% endif %}
+                <p class="text-muted small mb-3"><i class="bi bi-telephone me-1"></i> {{ customer.phone }}</p>
+                <span class="badge bg-light text-secondary border font-monospace">ID #{{ customer.id }}</span>
+                {% else %}
+                <p class="text-muted small mb-0">Customer record unavailable.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Payment -->
+        <div class="card detail-card mb-4">
+            <div class="card-header">
+                <strong><i class="bi bi-credit-card-2-front text-success"></i> Payment Details</strong>
+            </div>
+            <div class="card-body p-4">
+                {% if order.payment %}
+                <div class="mb-3">
+                    <span class="stat-label d-block mb-1">Method</span>
+                    <strong class="text-dark">{{ order.payment.method }}</strong>
+                </div>
+                <div class="mb-3">
+                    <span class="stat-label d-block mb-1">Status</span>
+                    <span class="badge badge-soft-primary">{{ order.payment.status }}</span>
+                </div>
+                <div class="mb-3">
+                    <span class="stat-label d-block mb-1">Amount</span>
+                    <strong class="text-dark">₹{{ order.payment.amount }}</strong>
+                </div>
+                {% if order.payment.paid_at %}
+                <div>
+                    <span class="stat-label d-block mb-1">Paid At</span>
+                    <span class="small text-muted">{{ order.payment.paid_at.strftime("%d %b %Y %I:%M %p") }}</span>
+                </div>
+                {% endif %}
+                {% else %}
+                <p class="text-muted small mb-0">Payment record unavailable.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Customer Note -->
+        {% if order.customer_note %}
+        <div class="card detail-card mb-4">
+            <div class="card-header">
+                <strong><i class="bi bi-chat-left-text text-warning"></i> Customer Note</strong>
+            </div>
+            <div class="card-body p-4 small text-secondary">
+                {{ order.customer_note }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ====================================== -->
+        <!-- Fulfillment -->
+        <!-- ====================================== -->
+        <div class="card detail-card">
+            <div class="card-header">
+                <strong><i class="bi bi-sliders text-success"></i> Fulfillment Action</strong>
+            </div>
+            <div class="card-body p-4">
+                {% if allowed_transitions %}
+                <form action="/admin/orders/{{ order.id }}/status" method="post" id="statusForm">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token(request) }}">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Next Status</label>
+                        <select name="new_status" id="newStatus" class="form-select" required>
+                            <option value="">Select action</option>
+                            {% for status in allowed_transitions %}
+                            <option value="{{ status }}">{{ status.replace('_', ' ').title() }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Admin Note</label>
+                        <textarea name="note" class="form-control" rows="2" placeholder="Optional note..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">
+                        <i class="bi bi-check2-circle me-1"></i> Update Order Status
+                    </button>
+                </form>
+                {% else %}
+                <div class="alert alert-secondary mb-0 small text-center py-3">
+                    <i class="bi bi-lock-fill me-1"></i> This order has reached a terminal state.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Custom Confirmation Modal for Status Updates -->
+<div class="modal fade" id="statusConfirmModal" tabindex="-1" aria-labelledby="statusConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title text-warning fw-bold d-flex align-items-center gap-2" id="statusConfirmModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill fs-4"></i> Confirm Status Update
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4 text-dark" id="statusConfirmText">
+                Are you sure you want to change this order's status?
+            </div>
+            <div class="modal-footer border-top-0 pt-0">
+                <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success rounded-3 px-4" id="executeStatusBtn">Yes, Proceed</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let statusModal = null;
+    let pendingFormSubmit = false;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const modalEl = document.getElementById('statusConfirmModal');
+        if (modalEl) {
+            statusModal = new bootstrap.Modal(modalEl);
+        }
+
+        const form = document.getElementById("statusForm");
+        if (form) {
+            form.addEventListener("submit", function(event) {
+                if (pendingFormSubmit) return; // Allow submit if already verified via modal
+
+                const statusSelect = document.getElementById("newStatus");
+                if (!statusSelect) return;
+                const status = statusSelect.value;
+
+                if (status === "CANCELLED" || status === "DELIVERY_FAILED" || status === "DELIVERED") {
+                    event.preventDefault();
+                    
+                    let msg = "Are you sure you want to mark this order as " + status.replaceAll("_", " ").toLowerCase() + "?";
+                    if (status === "DELIVERED") {
+                        msg = "Confirm that the order was delivered and payment was collected?";
+                    }
+                    
+                    document.getElementById('statusConfirmText').innerText = msg;
+                    statusModal.show();
+                }
+            });
+        }
+
+        const executeBtn = document.getElementById('executeStatusBtn');
+        if (executeBtn) {
+            executeBtn.addEventListener('click', function() {
+                pendingFormSubmit = true;
+                statusModal.hide();
+                document.getElementById("statusForm").submit();
+            });
+        }
+    });
+</script>
+{% endblock %}

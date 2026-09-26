@@ -1,0 +1,399 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+Audit #{{ log.id }} | GramaGo Admin
+{% endblock %}
+
+{% block page_title %}
+Audit Log Details
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Staggered Fade-in Animation */
+    .fade-up {
+        animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card Styling */
+    .detail-card {
+        border: none;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    .detail-card .card-header {
+        background-color: #ffffff;
+        border-bottom: 1px solid #f3f4f6;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .detail-card .card-header strong {
+        font-size: 1.1rem;
+        color: #1f2937;
+        letter-spacing: -0.3px;
+        margin: 0;
+    }
+
+    .detail-card .card-body {
+        padding: 1.5rem;
+    }
+
+    /* Labels & Typography */
+    .detail-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+        display: block;
+    }
+    
+    .detail-value {
+        font-size: 0.95rem;
+        color: #111827;
+    }
+
+    /* Soft Badges */
+    .badge-soft-primary {
+        background-color: #f0f9ff;
+        color: #0369a1;
+        border: 1px solid #bae6fd;
+        padding: 0.4em 0.8em;
+        font-weight: 600;
+        font-size: 0.8rem;
+        border-radius: 6px;
+    }
+    
+    .entity-id {
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 0.85rem;
+        background-color: #f3f4f6;
+        padding: 2px 8px;
+        border-radius: 4px;
+        color: #4b5563;
+        border: 1px solid #e5e7eb;
+    }
+
+    /* JSON Code Blocks */
+    .json-wrapper {
+        position: relative;
+        background-color: #111827; /* Dark Slate */
+        border-radius: 12px;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .json-wrapper-header {
+        background-color: #1f2937;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid #374151;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .json-wrapper-header span {
+        color: #9ca3af;
+        font-size: 0.75rem;
+        font-family: monospace;
+    }
+    
+    .copy-btn {
+        background: transparent;
+        border: 1px solid #4b5563;
+        color: #9ca3af;
+        border-radius: 6px;
+        padding: 0.2rem 0.5rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .copy-btn:hover {
+        background: #374151;
+        color: #ffffff;
+    }
+
+    .audit-json-block {
+        margin: 0;
+        padding: 1.25rem;
+        color: #a7f3d0; /* Soft emerald tint for JSON text */
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 0.85rem;
+        overflow-x: auto;
+        line-height: 1.5;
+    }
+
+    /* Empty States */
+    .empty-state {
+        background-color: #f9fafb;
+        border: 1px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        color: #6b7280;
+    }
+
+    /* Back Button */
+    .btn-back {
+        background-color: #ffffff;
+        border: 1px solid #e5e7eb;
+        color: #374151;
+        border-radius: 50%;
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    
+    .btn-back:hover {
+        background-color: #f3f4f6;
+        color: #111827;
+        transform: translateX(-2px);
+    }
+</style>
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 fade-up">
+    <div class="d-flex align-items-center gap-3">
+        <a href="/admin/audit-logs" class="btn-back text-decoration-none" title="Back to Audit Logs">
+            <i class="bi bi-arrow-left fs-5"></i>
+        </a>
+        <div>
+            <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+                Audit Log <span class="text-muted fs-5">#{{ log.id }}</span>
+            </h4>
+            <small class="text-muted d-flex align-items-center gap-1">
+                <i class="bi bi-clock"></i> 
+                {{ log.created_at.strftime("%d %b %Y %I:%M:%S %p") }}
+            </small>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-8">
+
+        <!-- Action Details -->
+        <div class="card detail-card mb-4 fade-up delay-1">
+            <div class="card-header">
+                <div class="p-2 bg-primary bg-opacity-10 rounded text-primary d-flex align-items-center justify-content-center">
+                    <i class="bi bi-info-circle-fill"></i>
+                </div>
+                <strong>Action Details</strong>
+            </div>
+
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <span class="detail-label">Action Performed</span>
+                        <div class="mt-1">
+                            <span class="badge-soft-primary">
+                                <i class="bi bi-lightning-charge-fill text-primary opacity-75 me-1"></i>
+                                {{ log.action.replace('_', ' ').title() }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <span class="detail-label">Target Entity</span>
+                        <div class="mt-1 d-flex align-items-center gap-2">
+                            <strong class="detail-value">{{ log.entity_type }}</strong>
+                            {% if log.entity_id %}
+                            <span class="entity-id">#{{ log.entity_id }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <span class="detail-label">Description</span>
+                        <div class="mt-1 detail-value p-3 bg-light rounded-3 border">
+                            {{ log.description or '—' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Old Data -->
+        <div class="card detail-card mb-4 fade-up delay-2">
+            <div class="card-header">
+                <div class="p-2 bg-secondary bg-opacity-10 rounded text-secondary d-flex align-items-center justify-content-center">
+                    <i class="bi bi-file-earmark-minus-fill"></i>
+                </div>
+                <strong>Previous Data State</strong>
+            </div>
+
+            <div class="card-body p-0">
+                {% if log.old_data %}
+                <div class="p-3 p-md-4">
+                    <div class="json-wrapper">
+                        <div class="json-wrapper-header">
+                            <span>JSON Payload</span>
+                            <button type="button" class="copy-btn" onclick="copyToClipboard('oldDataContent', this)">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                        <pre class="audit-json-block" id="oldDataContent">{{ log.old_data | tojson(indent=2) }}</pre>
+                    </div>
+                </div>
+                {% else %}
+                <div class="p-4">
+                    <div class="empty-state">
+                        <i class="bi bi-slash-circle fs-3 mb-2 d-block opacity-50"></i>
+                        No previous data recorded for this action.
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card detail-card fade-up delay-2">
+            <div class="card-header">
+                <div class="p-2 bg-success bg-opacity-10 rounded text-success d-flex align-items-center justify-content-center">
+                    <i class="bi bi-file-earmark-plus-fill"></i>
+                </div>
+                <strong>New Data State</strong>
+            </div>
+
+            <div class="card-body p-0">
+                {% if log.new_data %}
+                <div class="p-3 p-md-4">
+                    <div class="json-wrapper">
+                        <div class="json-wrapper-header">
+                            <span>JSON Payload</span>
+                            <button type="button" class="copy-btn" onclick="copyToClipboard('newDataContent', this)">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                        <pre class="audit-json-block" id="newDataContent">{{ log.new_data | tojson(indent=2) }}</pre>
+                    </div>
+                </div>
+                {% else %}
+                <div class="p-4">
+                    <div class="empty-state">
+                        <i class="bi bi-slash-circle fs-3 mb-2 d-block opacity-50"></i>
+                        No new data recorded for this action.
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card detail-card fade-up delay-3 position-sticky" style="top: 90px;">
+            <div class="card-header">
+                <div class="p-2 bg-dark bg-opacity-10 rounded text-dark d-flex align-items-center justify-content-center">
+                    <i class="bi bi-hdd-network-fill"></i>
+                </div>
+                <strong>Request Information</strong>
+            </div>
+
+            <div class="card-body">
+                <div class="mb-4">
+                    <span class="detail-label">Administrator</span>
+                    <div class="mt-2 d-flex align-items-center gap-3 p-2 border rounded-3 bg-light">
+                        {% if admin_user %}
+                        <div class="rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center text-primary" style="width: 40px; height: 40px; border: 1px solid #e5e7eb;">
+                            <i class="bi bi-person-fill fs-5"></i>
+                        </div>
+                        <div>
+                            <strong class="d-block text-dark">{{ admin_user.full_name }}</strong>
+                            <span class="small text-muted">{{ admin_user.email or admin_user.phone }}</span>
+                        </div>
+                        {% else %}
+                        <div class="rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center text-muted" style="width: 40px; height: 40px; border: 1px solid #e5e7eb;">
+                            <i class="bi bi-person-x-fill fs-5"></i>
+                        </div>
+                        <div>
+                            <strong class="d-block text-muted">System / Deleted</strong>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <span class="detail-label">Admin User ID</span>
+                    <div class="mt-1 detail-value d-flex align-items-center gap-2">
+                        <i class="bi bi-fingerprint text-muted"></i>
+                        {{ log.admin_user_id or '—' }}
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <span class="detail-label">IP Address</span>
+                    <div class="mt-1 detail-value d-flex align-items-center gap-2">
+                        <i class="bi bi-globe2 text-muted"></i>
+                        {% if log.ip_address %}
+                            <span class="font-monospace bg-light px-2 py-1 rounded border">{{ log.ip_address }}</span>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <span class="detail-label">Exact Timestamp</span>
+                    <div class="mt-1 detail-value d-flex align-items-center gap-2">
+                        <i class="bi bi-calendar2-check text-muted"></i>
+                        {{ log.created_at.strftime("%d %b %Y %I:%M:%S %p") }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyToClipboard(elementId, btnElement) {
+        const textToCopy = document.getElementById(elementId).innerText;
+        
+        // Create a temporary textarea element to copy the text
+        const tempTextArea = document.createElement("textarea");
+        tempTextArea.value = textToCopy;
+        document.body.appendChild(tempTextArea);
+        
+        // Select and copy
+        tempTextArea.select();
+        document.execCommand("copy");
+        
+        // Remove the temporary element
+        document.body.removeChild(tempTextArea);
+        
+        // Visual feedback on the button
+        const originalHTML = btnElement.innerHTML;
+        btnElement.innerHTML = '<i class="bi bi-check2"></i> Copied!';
+        btnElement.style.color = '#10b981';
+        
+        setTimeout(() => {
+            btnElement.innerHTML = originalHTML;
+            btnElement.style.color = '';
+        }, 2000);
+    }
+</script>
+{% endblock %}

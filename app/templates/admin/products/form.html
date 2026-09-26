@@ -1,0 +1,442 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+{% if product %}Edit Product{% else %}Create Product{% endif %} | GramaGo Admin
+{% endblock %}
+
+{% block page_title %}
+{% if product %}Edit Product{% else %}Create Product{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Staggered Fade-in Animation */
+    .fade-up {
+        animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card Styling */
+    .form-card {
+        border: none;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-card .card-header {
+        background-color: #ffffff;
+        border-bottom: 1px solid #f3f4f6;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .form-card .card-header strong {
+        font-size: 1.05rem;
+        color: #1f2937;
+        letter-spacing: -0.3px;
+    }
+
+    .form-card .card-body {
+        padding: 1.5rem;
+    }
+
+    /* Form Controls */
+    .form-label {
+        font-weight: 500;
+        color: #4b5563;
+        font-size: 0.9rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+        padding: 0.6rem 1rem;
+        font-size: 0.95rem;
+        color: #374151;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        background-color: #ffffff;
+        border-color: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        outline: none;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    /* Soft Badges */
+    .badge-soft-success { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; padding: 0.4em 0.8em; font-weight: 600; font-size: 0.75rem; border-radius: 6px; }
+
+    /* Product Images Card Thumbnails */
+    .admin-product-thumb {
+        height: 160px;
+        object-fit: cover;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+        border-bottom: 1px solid #f3f4f6;
+    }
+</style>
+
+{% if error %}
+<div class="alert alert-danger alert-dismissible fade show mb-4 fade-up" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<form
+    method="post"
+    action="{% if product %}/admin/products/{{ product.id }}/edit{% else %}/admin/products/create{% endif %}"
+    class="fade-up"
+>
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token(request) }}">
+
+    <div class="row g-4">
+        <!-- LEFT COLUMN: Main Form -->
+         <a href="/admin/products" class="btn btn-link text-decoration-none d-inline-flex align-items-center" title="Back to Products">
+  <i class="bi bi-arrow-left fs-5 me-1"></i>
+  <span>Back to Products</span>
+</a>
+
+        <div class="col-lg-8">
+            
+            <div class="card form-card">
+
+                
+                <div class="card-header">
+                    <i class="bi bi-box-seam text-success fs-5"></i>
+                    <strong>Product General Information</strong>
+                </div>
+
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Product Name</label>
+                            <input
+                                type="text"
+                                name="name"
+                                class="form-control"
+                                value="{{ product.name if product else '' }}"
+                                required
+                                placeholder="e.g. Organic Tomatoes"
+                            >
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Category</label>
+                            <select name="category_id" class="form-select" required>
+                                {% for category in categories %}
+                                <option
+                                    value="{{ category.id }}"
+                                    {% if product and product.category_id == category.id %}selected{% endif %}
+                                >
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">SKU</label>
+                            <input
+                                type="text"
+                                name="sku"
+                                class="form-control font-monospace"
+                                value="{{ product.sku if product and product.sku else '' }}"
+                                placeholder="PROD-TOM-01"
+                            >
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">Unit</label>
+<select name="unit" class="form-select" required>
+    {% set current_unit = product.unit if product else '' %}
+    <option value="KG" {% if current_unit == 'KG' %}selected{% endif %}>Kilogram (KG)</option>
+    <option value="LITRE" {% if current_unit == 'LITRE' %}selected{% endif %}>Litre (L)</option>
+    <option value="PIECE" {% if current_unit == 'PIECE' %}selected{% endif %}>Piece</option>
+    <option value="PACK" {% if current_unit == 'PACK' %}selected{% endif %}>Pack</option>
+    <option value="BOX" {% if current_unit == 'BOX' %}selected{% endif %}>Box</option>
+    <option value="DOZEN" {% if current_unit == 'DOZEN' %}selected{% endif %}>Dozen</option>
+    <option value="CUP" {% if current_unit == 'CUP' %}selected{% endif %}>Cup</option>
+</select>
+
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea
+                                name="description"
+                                class="form-control"
+                                placeholder="Enter product description..."
+                            >{{ product.description if product and product.description else '' }}</textarea>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Regular Price (₹)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                name="price"
+                                class="form-control"
+                                value="{{ product.price if product else '' }}"
+                                required
+                                placeholder="0.00"
+                            >
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Discount Price (₹)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                name="discount_price"
+                                class="form-control"
+                                value="{{ product.discount_price if product and product.discount_price is not none else '' }}"
+                                placeholder="Optional"
+                            >
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Unit Value</label>
+                            <input
+                                type="number"
+                                step="0.001"
+                                min="0.001"
+                                name="unit_value"
+                                class="form-control"
+                                value="{{ product.unit_value if product else 1 }}"
+                                required
+                            >
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Minimum Qty</label>
+                            <input
+                                type="number"
+                                step="0.001"
+                                min="0.001"
+                                name="min_order_qty"
+                                class="form-control"
+                                value="{{ product.min_order_qty if product else 1 }}"
+                                required
+                            >
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Maximum Qty</label>
+                            <input
+                                type="number"
+                                step="0.001"
+                                min="0.001"
+                                name="max_order_qty"
+                                class="form-control"
+                                value="{{ product.max_order_qty if product and product.max_order_qty is not none else '' }}"
+                                placeholder="No limit"
+                            >
+                        </div>
+
+                        <div class="col-12 pt-2">
+                            <div class="form-check form-switch ps-5">
+                                <input
+                                    type="checkbox"
+                                    name="is_featured"
+                                    class="form-check-input ms-0"
+                                    role="switch"
+                                    id="featured"
+                                    {% if product and product.is_featured %}checked{% endif %}
+                                >
+                                <label for="featured" class="form-check-label fw-medium ms-2">Featured Product on Storefront</label>
+                            </div>
+                        </div>
+
+                        {% if product %}
+                        <div class="col-12">
+                            <div class="form-check form-switch ps-5">
+                                <input
+                                    type="checkbox"
+                                    name="is_active"
+                                    class="form-check-input ms-0"
+                                    role="switch"
+                                    id="active"
+                                    {% if product.is_active %}checked{% endif %}
+                                >
+                                <label for="active" class="form-check-label fw-medium ms-2">Active Status (Visible for purchase)</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-3 mb-4">
+                <button type="submit" class="btn btn-success px-4 py-2 fw-semibold shadow-sm">
+                    <i class="bi bi-check-lg me-1"></i> {% if product %}Save Changes{% else %}Create Product{% endif %}
+                </button>
+                <a href="/admin/products" class="btn btn-light px-4 py-2 border text-decoration-none">
+                    Cancel
+                </a>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Inventory Summary Widget -->
+        {% if product %}
+        <div class="col-lg-4">
+            <div class="card form-card sticky-top" style="top: 90px;">
+                <div class="card-header">
+                    <i class="bi bi-stack text-primary fs-5"></i>
+                    <strong>Inventory Status</strong>
+                </div>
+                <div class="card-body">
+                    {% if product.inventory %}
+                    <div class="d-flex justify-content-between mb-3 pb-2 border-bottom">
+                        <span class="text-muted">Available Stock</span>
+                        <strong class="text-dark">{{ product.inventory.available_quantity }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3 pb-2 border-bottom">
+                        <span class="text-muted">Reserved Stock</span>
+                        <strong class="text-dark">{{ product.inventory.reserved_quantity }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Sellable Stock</span>
+                        <strong class="text-success fs-5">
+                            {{ product.inventory.available_quantity - product.inventory.reserved_quantity }}
+                        </strong>
+                    </div>
+                    <div class="mt-4 pt-2 border-top text-center">
+                        <a href="/admin/inventory/{{ product.id }}" class="btn btn-sm btn-outline-primary w-100 rounded-pill">
+                            <i class="bi bi-sliders me-1"></i> Manage Full Inventory
+                        </a>
+                    </div>
+                    {% else %}
+                    <p class="text-muted small mb-0">No inventory record attached.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</form>
+
+{% if product %}
+<!-- Product Images Gallery Card -->
+<div class="card form-card fade-up delay-1 mt-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <strong><i class="bi bi-images text-success me-2"></i> Product Gallery Images</strong>
+    </div>
+
+    <div class="card-body p-4">
+        <form
+            action="/admin/products/{{ product.id }}/images"
+            method="post"
+            enctype="multipart/form-data"
+            class="mb-4 pb-4 border-bottom"
+        >
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token(request) }}">
+            <label class="form-label fw-semibold mb-2">Upload New Image</label>
+            <div class="row g-2 align-items-center">
+                <div class="col-md-8">
+                    <input
+                        type="file"
+                        name="file"
+                        class="form-control"
+                        accept="image/jpeg,image/png,image/webp"
+                        required
+                    >
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-outline-success w-100 d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-cloud-arrow-up"></i> Upload
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div class="row g-4">
+            {% for image in product.images %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border shadow-sm rounded-4 overflow-hidden">
+                    <img
+                        src="{{ image.image_url }}"
+                        class="card-img-top admin-product-thumb"
+                        alt="Product Image"
+                    >
+                    <div class="card-body p-3 d-flex flex-column">
+                        <div class="mb-3">
+                            {% if image.is_primary %}
+                            <span class="badge-soft-success d-inline-block w-100 text-center py-1.5">
+                                <i class="bi bi-star-fill me-1"></i> Primary Image
+                            </span>
+                            {% else %}
+                            <form
+                                action="/admin/products/{{ product.id }}/images/{{ image.id }}/primary"
+                                method="post"
+                                class="w-100"
+                            >
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token(request) }}">
+                                <button class="btn btn-sm btn-outline-success w-100 rounded-pill">
+                                    Set as Primary
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+
+                        <form
+                            action="/admin/products/{{ product.id }}/images/{{ image.id }}/delete"
+                            method="post"
+                            class="mt-auto"
+                            onsubmit="return confirmDeleteImage(event, this);"
+                        >
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token(request) }}">
+                            <button class="btn btn-sm btn-outline-danger w-100 rounded-pill">
+                                <i class="bi bi-trash3 me-1"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="bi bi-image fs-1 opacity-50 mb-2 d-block"></i>
+                <p class="mb-0 small">No product images uploaded yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function confirmDeleteImage(event, formEl) {
+        if (!confirm('Are you sure you want to delete this image?')) {
+            event.preventDefault();
+            return false;
+        }
+        return true;
+    }
+</script>
+{% endblock %}

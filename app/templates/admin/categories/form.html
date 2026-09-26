@@ -1,0 +1,331 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+{% if category %}Edit Category{% else %}Create Category{% endif %} | GramaGo Admin
+{% endblock %}
+
+{% block page_title %}
+{% if category %}Edit Category{% else %}Create Category{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Staggered Fade-in Animation */
+    .fade-up {
+        animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card Styling */
+    .form-card {
+        border: none;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    .form-card .card-header {
+        border-bottom: 1px solid #f3f4f6;
+        padding: 1.5rem 2rem;
+        background-color: #ffffff;
+    }
+    
+    .form-card .card-header strong {
+        font-size: 1.15rem;
+        color: #1f2937;
+        letter-spacing: -0.3px;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .form-card .card-body {
+        padding: 2rem;
+    }
+
+    /* Form Elements Enhancements */
+    .form-label {
+        font-weight: 500;
+        color: #4b5563;
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 0.75rem 1.25rem;
+        border: 1px solid #d1d5db;
+        font-size: 1rem;
+        color: #374151;
+        background-color: #f9fafb;
+        transition: all 0.2s ease-in-out;
+    }
+    
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .form-control:focus, .form-select:focus {
+        background-color: #ffffff;
+        border-color: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        outline: none;
+    }
+    
+    /* Custom Checkbox Toggle Style */
+    .form-switch .form-check-input {
+        width: 3em;
+        height: 1.5em;
+        cursor: pointer;
+    }
+    .form-switch .form-check-input:checked {
+        background-color: #10b981;
+        border-color: #10b981;
+    }
+    .form-switch .form-check-label {
+        padding-top: 0.25rem;
+        margin-left: 0.5rem;
+        font-weight: 500;
+        cursor: pointer;
+        color: #374151;
+    }
+
+    /* Action Buttons */
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    /* Image Preview */
+    .image-upload-wrapper {
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        background-color: #f9fafb;
+        transition: all 0.2s;
+    }
+    .image-upload-wrapper:hover {
+        border-color: #10b981;
+        background-color: #f0fdf4;
+    }
+    .admin-preview-image {
+        max-width: 100%;
+        max-height: 250px;
+        object-fit: contain;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+</style>
+
+<div class="row justify-content-center">
+    
+    <div class="col-12 col-xl-10">
+
+        <!-- Top Navigation / Header -->
+        <div class="d-flex align-items-center justify-content-between mb-4 fade-up">
+            <a href="/admin/categories" class="btn btn-light rounded-pill px-3 shadow-sm d-inline-flex align-items-center gap-2 text-decoration-none">
+                <i class="bi bi-arrow-left"></i> Back to Categories
+            </a>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger alert-dismissible fade show mb-4 fade-up d-flex align-items-center gap-2" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            {{ error }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+
+        <div class="row g-4">
+            
+            <!-- Left Column: Primary Form -->
+            <div class="col-lg-8 fade-up">
+                
+                <div class="card form-card h-100">
+
+                    <div class="card-header">
+                        <div class="p-2 bg-success bg-opacity-10 rounded text-success d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                            <i class="bi bi-tag-fill"></i>
+                        </div>
+                        <strong>Category Details</strong>
+                    </div>
+
+                    <div class="card-body">
+
+                        <form method="post" action="{% if category %}/admin/categories/{{ category.id }}/edit{% else %}/admin/categories/create{% endif %}">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token(request) }}">
+
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="bi bi-fonts text-muted"></i> Category Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    class="form-control"
+                                    value="{{ category.name if category else '' }}"
+                                    required
+                                    placeholder="e.g. Mens Wear, Electronics"
+                                >
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="bi bi-text-paragraph text-muted"></i> Description
+                                </label>
+                                <textarea
+                                    name="description"
+                                    class="form-control"
+                                    placeholder="Brief description about this category..."
+                                >{{ category.description if category and category.description else '' }}</textarea>
+                            </div>
+
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">
+                                        <i class="bi bi-diagram-3 text-muted"></i> Parent Category
+                                    </label>
+                                    <select name="parent_id" class="form-select">
+                                        <option value="">No Parent (Root Category)</option>
+                                        {% for item in categories %}
+                                            {% if not category or item.id != category.id %}
+                                                <option
+                                                    value="{{ item.id }}"
+                                                    {% if category and category.parent_id == item.id %}selected{% endif %}
+                                                >
+                                                    {{ item.name }}
+                                                </option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">
+                                        <i class="bi bi-sort-numeric-down text-muted"></i> Sort Order
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="sort_order"
+                                        class="form-control"
+                                        value="{{ category.sort_order if category else 0 }}"
+                                        placeholder="0"
+                                    >
+                                </div>
+                            </div>
+
+                            {% if category %}
+                            <div class="mb-4 p-3 bg-light rounded-3 border">
+                                <div class="form-check form-switch d-flex align-items-center m-0 p-0 ps-5">
+                                    <input
+                                        class="form-check-input ms-0"
+                                        type="checkbox"
+                                        role="switch"
+                                        name="is_active"
+                                        id="isActive"
+                                        {% if category.is_active %}checked{% endif %}
+                                    >
+                                    <label class="form-check-label user-select-none" for="isActive">
+                                        Category is Active (Visible to customers)
+                                    </label>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="d-flex flex-column flex-sm-row gap-3 mt-4 pt-2 border-top">
+                                <button type="submit" class="btn btn-success btn-action flex-grow-1">
+                                    <i class="bi {% if category %}bi-check-lg{% else %}bi-plus-lg{% endif %}"></i> 
+                                    {% if category %}Save Changes{% else %}Create Category{% endif %}
+                                </button>
+                                
+                                <a href="/admin/categories" class="btn btn-light btn-action flex-grow-1 text-decoration-none">
+                                    <i class="bi bi-x-lg"></i> Cancel
+                                </a>
+                            </div>
+
+                        </form>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Image Upload (Only shown if editing) -->
+            {% if category %}
+            <div class="col-lg-4 fade-up delay-1">
+                
+                <div class="card form-card sticky-top" style="top: 90px;">
+                    <div class="card-header">
+                        <div class="p-2 bg-primary bg-opacity-10 rounded text-primary d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                            <i class="bi bi-image"></i>
+                        </div>
+                        <strong>Category Image</strong>
+                    </div>
+
+                    <div class="card-body text-center">
+                        
+                        {% if category.image_url %}
+                            <div class="position-relative d-inline-block w-100">
+                                <img src="{{ category.image_url }}" class="admin-preview-image w-100 object-fit-cover" alt="Category Image">
+                            </div>
+                        {% else %}
+                            <div class="p-4 mb-4 bg-light rounded-3 border border-dashed text-muted d-flex flex-column align-items-center justify-content-center" style="height: 200px;">
+                                <i class="bi bi-card-image fs-1 opacity-50 mb-2"></i>
+                                <p class="mb-0 small">No image uploaded yet</p>
+                            </div>
+                        {% endif %}
+
+                        <form action="/admin/categories/{{ category.id }}/image" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token(request) }}">
+                            
+                            <div class="image-upload-wrapper p-3">
+                                <input
+                                    type="file"
+                                    name="file"
+                                    class="form-control mb-3"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    required
+                                >
+                                <button type="submit" class="btn btn-outline-success w-100 d-flex align-items-center justify-content-center gap-2">
+                                    <i class="bi bi-cloud-arrow-up"></i> Upload New Image
+                                </button>
+                            </div>
+                            
+                            <small class="text-muted d-block mt-3 text-start">
+                                <i class="bi bi-info-circle me-1"></i> Accepted formats: JPEG, PNG, WEBP.
+                            </small>
+                        </form>
+
+                    </div>
+                </div>
+
+            </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

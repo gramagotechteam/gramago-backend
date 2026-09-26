@@ -1,0 +1,405 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+{{ product.name }} Inventory | GramaGo Admin
+{% endblock %}
+
+{% block page_title %}
+Inventory Details
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .fade-up {
+        animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .detail-card {
+        border: none;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .detail-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        color: #6b7280;
+    }
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #111827;
+        letter-spacing: -0.5px;
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+        padding: 0.6rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+    .form-control:focus, .form-select:focus {
+        background-color: #ffffff;
+        border-color: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        outline: none;
+    }
+
+    .table > :not(caption) > * > * {
+        padding: 1rem 1.25rem;
+        border-bottom-color: #f3f4f6;
+        vertical-align: middle;
+    }
+    .table thead th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+        background-color: #f9fafb;
+        border-bottom: none;
+    }
+    
+    .badge-soft {
+        padding: 0.4em 0.8em;
+        font-weight: 600;
+        font-size: 0.75rem;
+        border-radius: 6px;
+    }
+    .badge-soft-success { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .badge-soft-warning { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge-soft-primary { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-soft-danger { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge-soft-dark { background-color: #f3f4f6; color: #1f2937; border: 1px solid #e5e7eb; }
+    .badge-soft-info { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+</style>
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 fade-up">
+    <div class="d-flex align-items-center gap-3">
+        <div class="p-2 bg-success bg-opacity-10 rounded text-success d-none d-sm-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+            <i class="bi bi-box-seam fs-4"></i>
+        </div>
+        <div>
+            <h4 class="mb-1 fw-bold text-dark">
+                {{ product.name }}
+            </h4>
+            <span class="badge bg-light text-secondary border font-monospace">
+                SKU: {{ product.sku or 'N/A' }}
+            </span>
+        </div>
+    </div>
+
+    <a href="/admin/inventory" class="btn btn-light rounded-pill px-3 shadow-sm d-inline-flex align-items-center gap-2 text-decoration-none">
+        <i class="bi bi-arrow-left"></i> Back to Inventory
+    </a>
+</div>
+
+<div class="row g-3 mb-4 fade-up delay-1">
+    <div class="col-md-6 col-xl-3">
+        <div class="card detail-card border-start border-4 border-success">
+            <div class="card-body">
+                <div class="stat-label mb-1">Available Stock</div>
+                <h3 class="stat-value mt-1 mb-0">{{ inventory.available_quantity }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card detail-card border-start border-4 border-warning">
+            <div class="card-body">
+                <div class="stat-label mb-1">Reserved Stock</div>
+                <h3 class="stat-value mt-1 mb-0">{{ inventory.reserved_quantity }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card detail-card border-start border-4 border-primary">
+            <div class="card-body">
+                <div class="stat-label mb-1">Sellable Stock</div>
+                <h3 class="stat-value mt-1 mb-0">{{ sellable_quantity }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card detail-card border-start border-4 border-secondary">
+            <div class="card-body">
+                <div class="stat-label mb-1">Reorder Level</div>
+                <h3 class="stat-value mt-1 mb-0">{{ inventory.reorder_level }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if is_low_stock %}
+<div class="alert alert-warning alert-dismissible fade show mb-4 fade-up d-flex align-items-center gap-2" role="alert">
+    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+    <span><strong>Low Stock Warning:</strong> This product is at or below its configured reorder level.</span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<div class="row g-4 mb-4 fade-up delay-2">
+    
+    <!-- Add Stock -->
+    <div class="col-lg-6">
+        <div class="card detail-card h-100">
+            <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
+                <i class="bi bi-plus-circle text-success fs-5"></i>
+                <strong class="text-dark">Add Stock</strong>
+            </div>
+            <div class="card-body p-4">
+                <form action="/admin/inventory/{{ product.id }}/stock" method="post">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token(request) }}">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Quantity</label>
+                        <input type="number" step="0.001" min="0.001" name="quantity" class="form-control" required placeholder="Enter quantity">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Note</label>
+                        <textarea name="note" class="form-control" rows="2" placeholder="Example: Weekly stock received"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-check-lg"></i> Add Stock
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reorder Level -->
+    <div class="col-lg-6">
+        <div class="card detail-card h-100">
+            <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
+                <i class="bi bi-sliders text-primary fs-5"></i>
+                <strong class="text-dark">Reorder Level Threshold</strong>
+            </div>
+            <div class="card-body p-4">
+                <form action="/admin/inventory/{{ product.id }}/reorder-level" method="post">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token(request) }}">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Reorder Level</label>
+                        <input type="number" step="0.001" min="0" name="reorder_level" class="form-control" value="{{ inventory.reorder_level }}" required>
+                    </div>
+                    <p class="small text-muted mb-3">
+                        <i class="bi bi-info-circle me-1"></i> When sellable stock reaches this quantity, the product will trigger low stock alerts.
+                    </p>
+                    <button type="submit" class="btn btn-outline-success px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-arrow-repeat"></i> Update Level
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Adjustment -->
+    <div class="col-lg-6">
+        <div class="card detail-card h-100">
+            <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
+                <i class="bi bi-tools text-info fs-5"></i>
+                <strong class="text-dark">Manual Adjustment</strong>
+            </div>
+            <div class="card-body p-4">
+                <form action="/admin/inventory/{{ product.id }}/adjust" method="post">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token(request) }}">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Adjustment Type</label>
+                        <select name="direction" class="form-select" required>
+                            <option value="ADD">Add Stock</option>
+                            <option value="REMOVE">Remove Stock</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Quantity</label>
+                        <input type="number" step="0.001" min="0.001" name="quantity" class="form-control" required placeholder="Enter quantity">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Reason</label>
+                        <textarea name="note" class="form-control" rows="2" required placeholder="Example: Physical stock correction"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-check2"></i> Apply Adjustment
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Damaged Stock -->
+    <div class="col-lg-6">
+        <div class="card detail-card h-100 border border-danger-subtle">
+            <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
+                <i class="bi bi-exclamation-octagon text-danger fs-5"></i>
+                <strong class="text-danger">Damaged Stock</strong>
+            </div>
+            <div class="card-body p-4">
+                <form action="/admin/inventory/{{ product.id }}/damaged" method="post" id="damagedStockForm">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token(request) }}">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Damaged Quantity</label>
+                        <input type="number" step="0.001" min="0.001" name="quantity" class="form-control" required placeholder="Enter quantity">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Note</label>
+                        <textarea name="note" class="form-control" rows="2" placeholder="Example: Damaged during transport"></textarea>
+                    </div>
+                    <button type="button" class="btn btn-outline-danger px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2" onclick="confirmDamage(event);">
+                        <i class="bi bi-trash3"></i> Record Damage
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="card detail-card fade-up delay-3">
+    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
+        <i class="bi bi-clock-history text-secondary fs-5"></i>
+        <strong class="text-dark">Inventory Transaction History</strong>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Type</th>
+                    <th>Quantity</th>
+                    <th>Reference</th>
+                    <th>Note</th>
+                    <th>By User</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in transactions %}
+                <tr>
+                    <td class="text-nowrap text-muted small">
+                        <i class="bi bi-calendar2 me-1"></i>{{ transaction.created_at.strftime("%d %b %Y %I:%M %p") }}
+                    </td>
+                    <td>
+                        {% if transaction.transaction_type == 'STOCK_IN' %}
+                            <span class="badge-soft badge-soft-success">Stock In</span>
+                        {% elif transaction.transaction_type == 'ORDER_RESERVED' %}
+                            <span class="badge-soft badge-soft-warning">Reserved</span>
+                        {% elif transaction.transaction_type == 'ORDER_SOLD' %}
+                            <span class="badge-soft badge-soft-primary">Sold</span>
+                        {% elif transaction.transaction_type == 'ORDER_CANCELLED' %}
+                            <span class="badge-soft badge-soft-dark">Released</span>
+                        {% elif transaction.transaction_type == 'DAMAGED' %}
+                            <span class="badge-soft badge-soft-danger">Damaged</span>
+                        {% elif transaction.transaction_type == 'MANUAL_ADJUSTMENT' %}
+                            <span class="badge-soft badge-soft-info">Adjustment</span>
+                        {% elif transaction.transaction_type == 'RETURNED' %}
+                            <span class="badge-soft badge-soft-dark">Returned</span>
+                        {% else %}
+                            <span class="badge-soft badge-soft-dark">{{ transaction.transaction_type }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-bold text-dark">
+                        {{ transaction.quantity }}
+                    </td>
+                    <td class="font-monospace small text-muted">
+                        {% if transaction.reference_type %}
+                            {{ transaction.reference_type }} {% if transaction.reference_id %}#{{ transaction.reference_id }}{% endif %}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="text-secondary small text-truncate d-inline-block" style="max-width: 250px;" title="{{ transaction.note }}">
+                            {{ transaction.note or '—' }}
+                        </span>
+                    </td>
+                    <td class="text-muted small">
+                        {% if transaction.created_by %}
+                            User #{{ transaction.created_by }}
+                        {% else %}
+                            System
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-5">
+                        <div class="d-flex flex-column align-items-center justify-content-center text-muted">
+                            <i class="bi bi-inbox fs-3 mb-2 opacity-50"></i>
+                            <p class="mb-0 small">No inventory transactions recorded yet.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Custom Confirmation Modal for Damaged Stock -->
+<div class="modal fade" id="damageConfirmModal" tabindex="-1" aria-labelledby="damageConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title text-danger fw-bold d-flex align-items-center gap-2" id="damageConfirmModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill fs-4"></i> Confirm Damaged Stock
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4 text-dark">
+                Are you sure you want to mark this stock quantity as damaged? 
+                <br><br>
+                <span class="text-muted small">This action will immediately deduct the specified quantity from sellable inventory.</span>
+            </div>
+            <div class="modal-footer border-top-0 pt-0">
+                <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger rounded-3 px-4" id="executeDamageBtn">Yes, Record Damage</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let damageModal = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        damageModal = new bootstrap.Modal(document.getElementById('damageConfirmModal'));
+        
+        document.getElementById('executeDamageBtn').addEventListener('click', function() {
+            document.getElementById('damagedStockForm').submit();
+        });
+    });
+
+    function confirmDamage(event) {
+        const form = document.getElementById('damagedStockForm');
+        if (form.checkValidity()) {
+            damageModal.show();
+        } else {
+            form.reportValidity();
+        }
+    }
+</script>
+{% endblock %}

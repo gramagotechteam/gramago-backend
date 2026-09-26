@@ -1,0 +1,806 @@
+{% extends "admin/base.html" %}
+
+
+{% block title %}
+Commerce Settings | GramaGo Admin
+{% endblock %}
+
+
+{% block page_title %}
+Commerce Settings
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+
+    .settings-wrapper {
+        max-width: 1050px;
+    }
+
+
+    .settings-card {
+        border: none;
+        border-radius: 14px;
+        background: #ffffff;
+
+        box-shadow:
+            0 2px 12px
+            rgba(0, 0, 0, 0.04);
+
+        overflow: hidden;
+    }
+
+
+    .settings-header {
+        padding: 1.5rem;
+
+        border-bottom:
+            1px solid #f3f4f6;
+
+        background:
+            linear-gradient(
+                135deg,
+                #ffffff 0%,
+                #f0fdf4 100%
+            );
+    }
+
+
+    .settings-icon {
+        width: 46px;
+        height: 46px;
+
+        border-radius: 12px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        background: #d1fae5;
+        color: #059669;
+
+        font-size: 1.35rem;
+    }
+
+
+    .setting-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+
+        color: #374151;
+    }
+
+
+    .setting-help {
+        font-size: 0.8rem;
+
+        color: #6b7280;
+
+        margin-top: 6px;
+    }
+
+
+    .currency-input {
+        position: relative;
+    }
+
+
+    .currency-prefix {
+        position: absolute;
+
+        left: 15px;
+        top: 50%;
+
+        transform:
+            translateY(-50%);
+
+        font-weight: 700;
+
+        color: #6b7280;
+
+        z-index: 5;
+    }
+
+
+    .currency-input input {
+        padding-left: 36px;
+
+        height: 48px;
+
+        border-radius: 10px;
+
+        border:
+            1px solid #d1d5db;
+
+        font-weight: 600;
+    }
+
+
+    .currency-input input:focus {
+        border-color: #10b981;
+
+        box-shadow:
+            0 0 0 3px
+            rgba(
+                16,
+                185,
+                129,
+                0.12
+            );
+    }
+
+
+    .status-card {
+        border-radius: 14px;
+
+        padding: 1.25rem;
+
+        height: 100%;
+    }
+
+
+    .status-free {
+        background: #ecfdf5;
+
+        border:
+            1px solid #a7f3d0;
+    }
+
+
+    .status-paid {
+        background: #fffbeb;
+
+        border:
+            1px solid #fde68a;
+    }
+
+
+    .status-value {
+        font-size: 1.6rem;
+
+        font-weight: 700;
+
+        letter-spacing:
+            -0.5px;
+    }
+
+
+    .save-button {
+        min-width: 180px;
+
+        height: 46px;
+
+        border-radius: 10px;
+
+        font-weight: 600;
+    }
+
+
+    .info-card {
+        border-radius: 12px;
+
+        background: #f9fafb;
+
+        border:
+            1px solid #e5e7eb;
+
+        padding: 1rem;
+    }
+
+
+    .fade-up {
+        animation:
+            settingsFadeUp
+            0.45s ease forwards;
+    }
+
+
+    @keyframes settingsFadeUp {
+
+        from {
+            opacity: 0;
+            transform:
+                translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform:
+                translateY(0);
+        }
+    }
+
+</style>
+
+
+<div
+    class="settings-wrapper
+           mx-auto
+           fade-up"
+>
+
+
+    <!-- ===================================== -->
+    <!-- SUCCESS -->
+    <!-- ===================================== -->
+
+    {% if success %}
+
+    <div
+        class="alert
+               alert-success
+               d-flex
+               align-items-center"
+        role="alert"
+    >
+
+        <i
+            class="bi
+                   bi-check-circle-fill
+                   fs-5
+                   me-3"
+        ></i>
+
+        <div>
+
+            <strong>
+                Commerce settings updated.
+            </strong>
+
+            <div class="small">
+
+                Customer checkout will now use
+                the latest minimum order amount
+                and delivery fee.
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- ===================================== -->
+    <!-- FREE DELIVERY TRANSITION -->
+    <!-- ===================================== -->
+
+    {% if became_free_delivery %}
+
+    <div
+        class="alert
+               alert-success
+               d-flex
+               align-items-center"
+    >
+
+        <i
+            class="bi
+                   bi-truck
+                   fs-4
+                   me-3"
+        ></i>
+
+        <div>
+
+            <strong>
+                Free Delivery Activated
+            </strong>
+
+            <div class="small">
+
+                Delivery fee changed from
+                a paid amount to ₹0.
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- ===================================== -->
+    <!-- ERROR -->
+    <!-- ===================================== -->
+
+    {% if error %}
+
+    <div
+        class="alert
+               alert-danger
+               d-flex
+               align-items-center"
+    >
+
+        <i
+            class="bi
+                   bi-exclamation-triangle-fill
+                   me-3"
+        ></i>
+
+        <div>
+            {{ error }}
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    <div class="row g-4">
+
+
+        <!-- ================================= -->
+        <!-- FORM -->
+        <!-- ================================= -->
+
+        <div class="col-lg-8">
+
+            <div class="settings-card">
+
+                <div class="settings-header">
+
+                    <div
+                        class="d-flex
+                               align-items-center
+                               gap-3"
+                    >
+
+                        <div
+                            class="settings-icon"
+                        >
+
+                            <i
+                                class="bi
+                                       bi-sliders"
+                            ></i>
+
+                        </div>
+
+                        <div>
+
+                            <h5
+                                class="mb-1
+                                       fw-bold"
+                            >
+                                Order & Delivery
+                            </h5>
+
+                            <div
+                                class="text-muted
+                                       small"
+                            >
+
+                                Configure customer
+                                checkout requirements.
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="p-4">
+
+                    <form
+                        method="post"
+                        action="/admin/commerce-settings"
+                    >
+
+                        <input
+                            type="hidden"
+                            name="_csrf_token"
+                            value="{{ csrf_token(request) }}"
+                        >
+
+
+                        <!-- ============================= -->
+                        <!-- MINIMUM ORDER -->
+                        <!-- ============================= -->
+
+                        <div class="mb-4">
+
+                            <label
+                                class="setting-label
+                                       mb-2"
+                            >
+                                Minimum Order Amount
+                            </label>
+
+
+                            <div
+                                class="currency-input"
+                            >
+
+                                <span
+                                    class="currency-prefix"
+                                >
+                                    ₹
+                                </span>
+
+                                <input
+                                    type="number"
+
+                                    class="form-control"
+
+                                    name="minimum_order_amount"
+
+                                    min="0"
+
+                                    max="99999999.99"
+
+                                    step="0.01"
+
+                                    required
+
+                                    value="{% if submitted_minimum is defined %}{{ submitted_minimum }}{% else %}{{ settings.minimum_order_amount }}{% endif %}"
+                                >
+
+                            </div>
+
+
+                            <div
+                                class="setting-help"
+                            >
+
+                                Customers must reach
+                                this product subtotal
+                                before placing an order.
+
+                                Use ₹0 if there should
+                                be no minimum order.
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ============================= -->
+                        <!-- DELIVERY FEE -->
+                        <!-- ============================= -->
+
+                        <div class="mb-4">
+
+                            <label
+                                class="setting-label
+                                       mb-2"
+                            >
+                                Delivery Fee
+                            </label>
+
+
+                            <div
+                                class="currency-input"
+                            >
+
+                                <span
+                                    class="currency-prefix"
+                                >
+                                    ₹
+                                </span>
+
+                                <input
+                                    type="number"
+
+                                    class="form-control"
+
+                                    name="delivery_fee"
+
+                                    min="0"
+
+                                    max="99999999.99"
+
+                                    step="0.01"
+
+                                    required
+
+                                    value="{% if submitted_delivery is defined %}{{ submitted_delivery }}{% else %}{{ settings.delivery_fee }}{% endif %}"
+                                >
+
+                            </div>
+
+
+                            <div
+                                class="setting-help"
+                            >
+
+                                Set the amount charged
+                                for each new order.
+
+                                <strong>
+                                    ₹0 means Free Delivery.
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <hr class="my-4">
+
+
+                        <!-- ============================= -->
+                        <!-- SAVE -->
+                        <!-- ============================= -->
+
+                        <div
+                            class="d-flex
+                                   justify-content-between
+                                   align-items-center
+                                   flex-wrap
+                                   gap-3"
+                        >
+
+                            <div
+                                class="small
+                                       text-muted"
+                            >
+
+                                <i
+                                    class="bi
+                                           bi-shield-check
+                                           me-1"
+                                ></i>
+
+                                Checkout totals are
+                                still validated by
+                                the backend.
+
+                            </div>
+
+
+                            <button
+                                type="submit"
+
+                                class="btn
+                                       btn-success
+                                       save-button"
+                            >
+
+                                <i
+                                    class="bi
+                                           bi-check2-circle
+                                           me-2"
+                                ></i>
+
+                                Save Settings
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================= -->
+        <!-- CURRENT STATUS -->
+        <!-- ================================= -->
+
+        <div class="col-lg-4">
+
+            <div class="d-flex flex-column gap-3">
+
+
+                <!-- ========================= -->
+                <!-- DELIVERY STATUS -->
+                <!-- ========================= -->
+
+                {% if settings.delivery_fee == 0 %}
+
+                <div
+                    class="status-card
+                           status-free"
+                >
+
+                    <div
+                        class="d-flex
+                               align-items-center
+                               gap-2
+                               mb-3"
+                    >
+
+                        <i
+                            class="bi
+                                   bi-truck
+                                   text-success
+                                   fs-4"
+                        ></i>
+
+                        <span
+                            class="fw-semibold
+                                   text-success"
+                        >
+                            Delivery Status
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="status-value
+                               text-success"
+                    >
+                        FREE
+                    </div>
+
+
+                    <div
+                        class="small
+                               text-success
+                               mt-1"
+                    >
+                        Customers currently pay
+                        no delivery fee.
+                    </div>
+
+                </div>
+
+
+                {% else %}
+
+                <div
+                    class="status-card
+                           status-paid"
+                >
+
+                    <div
+                        class="d-flex
+                               align-items-center
+                               gap-2
+                               mb-3"
+                    >
+
+                        <i
+                            class="bi
+                                   bi-truck
+                                   text-warning
+                                   fs-4"
+                        ></i>
+
+                        <span
+                            class="fw-semibold"
+                        >
+                            Delivery Status
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="status-value"
+                    >
+                        ₹{{ settings.delivery_fee }}
+                    </div>
+
+
+                    <div
+                        class="small
+                               text-muted
+                               mt-1"
+                    >
+                        Current delivery charge
+                        per order.
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+
+                <!-- ========================= -->
+                <!-- MINIMUM ORDER STATUS -->
+                <!-- ========================= -->
+
+                <div class="info-card">
+
+                    <div
+                        class="text-muted
+                               small
+                               fw-semibold
+                               text-uppercase
+                               mb-2"
+                    >
+                        Minimum Order
+                    </div>
+
+
+                    <div
+                        class="fs-4
+                               fw-bold
+                               text-dark"
+                    >
+                        ₹{{ settings.minimum_order_amount }}
+                    </div>
+
+
+                    <div
+                        class="small
+                               text-muted
+                               mt-1"
+                    >
+                        Required product subtotal
+                        before checkout.
+                    </div>
+
+                </div>
+
+
+                <!-- ========================= -->
+                <!-- LAST UPDATE -->
+                <!-- ========================= -->
+
+                <div class="info-card">
+
+                    <div
+                        class="d-flex
+                               align-items-center
+                               gap-2
+                               mb-2"
+                    >
+
+                        <i
+                            class="bi
+                                   bi-clock-history
+                                   text-muted"
+                        ></i>
+
+                        <span
+                            class="small
+                                   fw-semibold"
+                        >
+                            Last Updated
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="small
+                               text-muted"
+                    >
+
+                        {{ settings.updated_at }}
+
+                    </div>
+
+
+                    {% if settings.updated_by %}
+
+                    <div
+                        class="small
+                               text-muted
+                               mt-1"
+                    >
+
+                        Admin ID:
+                        {{ settings.updated_by }}
+
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
