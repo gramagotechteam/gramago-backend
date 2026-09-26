@@ -1,3 +1,34 @@
+# import sys
+# from pathlib import Path
+# from logging.config import fileConfig
+
+# from sqlalchemy import engine_from_config
+# from sqlalchemy import pool
+
+# from alembic import context
+
+# from app.core.config import settings
+
+
+# BASE_DIR = Path(__file__).resolve().parents[1]
+# sys.path.append(str(BASE_DIR))
+
+
+# from app.db.base import Base
+# from app.db import models
+
+
+# config = context.config
+
+
+# if config.config_file_name is not None:
+#     fileConfig(config.config_file_name)
+
+
+# target_metadata = Base.metadata
+
+
+
 import sys
 from pathlib import Path
 from logging.config import fileConfig
@@ -7,24 +38,39 @@ from sqlalchemy import pool
 
 from alembic import context
 
-
 BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(BASE_DIR))
 
-
 from app.db.base import Base
 from app.db import models
-
+from app.core.config import settings
 
 config = context.config
 
+database_url = settings.DATABASE_URL
+
+if database_url.startswith("postgresql://"):
+    database_url = database_url.replace(
+        "postgresql://",
+        "postgresql+psycopg://",
+        1,
+    )
+elif database_url.startswith("postgres://"):
+    database_url = database_url.replace(
+        "postgres://",
+        "postgresql+psycopg://",
+        1,
+    )
+
+config.set_main_option(
+    "sqlalchemy.url",
+    database_url,
+)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-
 target_metadata = Base.metadata
-
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
