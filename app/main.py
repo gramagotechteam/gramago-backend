@@ -356,6 +356,17 @@ app = FastAPI(
 )
 
 
+from fastapi import Request
+from fastapi.responses import HTMLResponse
+
+# Add this route after your routers are included
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse(
+        name="home.html",
+         request=request,
+    )
+
 # ============================================================
 # SESSION MIDDLEWARE
 # ============================================================
