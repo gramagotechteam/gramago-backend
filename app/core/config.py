@@ -178,6 +178,11 @@ class Settings(BaseSettings):
     FIREBASE_CREDENTIALS_PATH: str | None = None
     
     FIREBASE_CREDENTIALS_JSON: str | None = None
+    
+    
+    
+    FIREBASE_CREDENTIALS_DELIVERY_JSON: str | None = None
+    FIREBASE_CREDENTIALS_DELIVERY_PATH: str | None = None
 
 
     # =========================================================
