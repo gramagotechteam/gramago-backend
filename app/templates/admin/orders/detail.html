@@ -288,6 +288,15 @@ Order Details
             </div>
         </div>
 
+
+        <a
+    href="/admin/delivery-assignments/order/{{ order.id }}"
+    class="btn btn-outline-success"
+>
+    Delivery Details
+</a>
+
+
         <!-- Status History -->
         <div class="card detail-card">
             <div class="card-header">
@@ -428,7 +437,30 @@ Order Details
                 </form>
                 {% else %}
                 <div class="alert alert-secondary mb-0 small text-center py-3">
-                    <i class="bi bi-lock-fill me-1"></i> This order has reached a terminal state.
+                 
+
+                    {% if order.order_status == 'PACKED' %}
+
+<div class="alert alert-success mb-0 small text-center py-3">
+
+    <i class="bi bi-check-circle-fill me-1"></i>
+
+    Admin preparation is complete.
+    Delivery workflow now manages this order.
+
+</div>
+
+{% else %}
+
+<div class="alert alert-secondary mb-0 small text-center py-3">
+
+    <i class="bi bi-lock-fill me-1"></i>
+
+    Order status is controlled by the delivery workflow.
+
+</div>
+
+{% endif %}
                 </div>
                 {% endif %}
             </div>

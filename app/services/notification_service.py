@@ -509,6 +509,168 @@ class NotificationService:
 
 
         await self.db.commit()
+        
+        
+        
+
+
+    # =========================================================
+    # ORDER STATUS NOTIFICATION
+    # =========================================================
+
+    async def create_order_status_notification(
+        self,
+        *,
+        user_id: int,
+        order_id: int,
+        order_number: str,
+        order_status: str,
+    ) -> Notification | None:
+
+        status_value = (
+            order_status
+            .strip()
+            .upper()
+        )
+
+        messages = {
+
+            "CONFIRMED": {
+                "type": "ORDER_CONFIRMED",
+                "title": "Order confirmed",
+                "message": (
+                    f"Your order {order_number} "
+                    f"has been confirmed."
+                ),
+            },
+
+            "PACKED": {
+                "type": "ORDER_PACKED",
+                "title": "Order packed",
+                "message": (
+                    f"Your order {order_number} "
+                    f"has been packed."
+                ),
+            },
+
+            "READY_FOR_PICKUP": {
+                "type": "ORDER_READY_FOR_PICKUP",
+                "title": "Order ready for delivery",
+                "message": (
+                    f"Your order {order_number} "
+                    f"is ready for delivery."
+                ),
+            },
+
+            "ASSIGNED": {
+                "type": "DELIVERY_PARTNER_ASSIGNED",
+                "title": "Delivery partner assigned",
+                "message": (
+                    f"A delivery partner has been "
+                    f"assigned to your order "
+                    f"{order_number}."
+                ),
+            },
+
+            "ACCEPTED": {
+                "type": "DELIVERY_ACCEPTED",
+                "title": "Delivery accepted",
+                "message": (
+                    f"Your delivery partner has accepted "
+                    f"order {order_number}."
+                ),
+            },
+
+            "PICKED_UP": {
+                "type": "ORDER_PICKED_UP",
+                "title": "Order picked up",
+                "message": (
+                    f"Your order {order_number} "
+                    f"has been picked up."
+                ),
+            },
+
+            "OUT_FOR_DELIVERY": {
+                "type": "ORDER_OUT_FOR_DELIVERY",
+                "title": "Out for delivery",
+                "message": (
+                    f"Your order {order_number} "
+                    f"is out for delivery."
+                ),
+            },
+
+            "DELIVERED": {
+                "type": "ORDER_DELIVERED",
+                "title": "Order delivered",
+                "message": (
+                    f"Your order {order_number} "
+                    f"has been delivered successfully."
+                ),
+            },
+
+            "DELIVERY_FAILED": {
+                "type": "DELIVERY_FAILED",
+                "title": "Delivery attempt unsuccessful",
+                "message": (
+                    f"We could not complete delivery of "
+                    f"order {order_number}. "
+                    f"We will update you on the next step."
+                ),
+            },
+
+            "CANCELLED": {
+                "type": "ORDER_CANCELLED",
+                "title": "Order cancelled",
+                "message": (
+                    f"Your order {order_number} "
+                    f"was cancelled."
+                ),
+            },
+        }
+
+        config = messages.get(
+            status_value
+        )
+
+        if config is None:
+            return None
+
+        return await self.create(
+            user_id=user_id,
+
+            notification_type=(
+                config["type"]
+            ),
+
+            title=(
+                config["title"]
+            ),
+
+            message=(
+                config["message"]
+            ),
+
+            category=(
+                self.CATEGORY_TRANSACTIONAL
+            ),
+
+            action="OPEN_ORDER",
+
+            reference_type="ORDER",
+
+            reference_id=order_id,
+
+            metadata={
+                "order_id":
+                    order_id,
+
+                "order_number":
+                    order_number,
+
+                "order_status":
+                    status_value,
+            },
+        )
 
 
     # =========================================================
@@ -621,3 +783,7 @@ class NotificationService:
 
 
         return "gramago_general"
+    
+    
+
+

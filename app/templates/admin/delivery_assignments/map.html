@@ -1,0 +1,534 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+Delivery Map | GramaGo Admin
+{% endblock %}
+
+{% block page_title %}
+Delivery Map
+{% endblock %}
+
+{% block content %}
+
+<!-- ====================================================== -->
+<!-- LEAFLET CSS & JS -->
+<!-- ====================================================== -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+    /* Staggered Fade-in Animation */
+    .fade-up {
+        animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card Styling */
+    .table-card {
+        border: none;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    .kpi-card {
+        border: none;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        height: 100%;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .kpi-card .card-body {
+        padding: 1.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        color: #6b7280;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #111827;
+        letter-spacing: -0.5px;
+    }
+
+    /* ========================================================= */
+    /* MAP MARKERS & POPUPS */
+    /* ========================================================= */
+
+    .delivery-partner-marker,
+    .delivery-customer-marker {
+        background: transparent;
+        border: none;
+    }
+
+    .partner-pin {
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        background: #10b981; /* Primary Emerald */
+        border: 3px solid #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+        transition: transform 0.2s;
+    }
+    
+    .partner-pin:hover {
+        transform: scale(1.1);
+    }
+
+    .customer-pin {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        background: #f59e0b; /* Warning Amber */
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+    }
+
+    .delivery-map-popup {
+        min-width: 240px;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .map-popup-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 2px;
+    }
+
+    .map-small {
+        font-size: 12px;
+        margin-top: 2px;
+        color: #4b5563;
+    }
+
+    .map-muted {
+        color: #6b7280;
+    }
+
+    .map-badge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 6px;
+        margin-right: 4px;
+    }
+
+    .map-online { color: #065f46; background: #d1fae5; border: 1px solid #a7f3d0; }
+    .map-offline { color: #4b5563; background: #f3f4f6; border: 1px solid #e5e7eb; }
+    .map-workload { color: #92400e; background: #fef3c7; border: 1px solid #fde68a; }
+    .map-status { color: #1e40af; background: #dbeafe; border: 1px solid #bfdbfe; font-size: 10px; padding: 2px 6px; }
+
+    .map-order-item {
+        padding: 8px 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    .map-order-item:last-child {
+        border-bottom: none;
+    }
+
+    .map-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #10b981;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .map-link:hover {
+        color: #059669;
+        text-decoration: underline;
+    }
+
+    /* Leaflet overrides */
+    .leaflet-container {
+        z-index: 1;
+        font-family: 'Inter', sans-serif;
+    }
+    .leaflet-popup-content-wrapper {
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .leaflet-popup-content {
+        margin: 16px;
+    }
+</style>
+
+<!-- ================================================== -->
+<!-- HEADER -->
+<!-- ================================================== -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 fade-up">
+    <div class="d-flex align-items-center gap-3">
+        <div class="p-2 bg-success bg-opacity-10 rounded text-success d-none d-sm-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+            <i class="bi bi-geo-alt-fill fs-4"></i>
+        </div>
+        <div>
+            <h5 class="mb-1 fw-bold text-dark">
+                Delivery Map
+            </h5>
+            <small class="text-muted">
+                Latest reported locations of active GramaGo delivery partners.
+            </small>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a href="/admin/delivery-assignments/active" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm d-flex align-items-center gap-2 text-decoration-none">
+            <i class="bi bi-broadcast-pin"></i> Active Deliveries
+        </a>
+        <a href="/admin/delivery-assignments/map" class="btn btn-success rounded-pill px-3 shadow-sm d-flex align-items-center gap-2 text-decoration-none">
+            <i class="bi bi-arrow-clockwise"></i> Refresh Map
+        </a>
+    </div>
+</div>
+
+<!-- ================================================== -->
+<!-- SUMMARY KPI CARDS -->
+<!-- ================================================== -->
+<div class="row g-3 mb-4 fade-up delay-1">
+
+    <div class="col-lg-3 col-md-6">
+        <div class="card kpi-card border-start border-4 border-secondary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-1">Active Partners</div>
+                        <h3 class="stat-value mt-1 mb-0">{{ total_active_partners }}</h3>
+                    </div>
+                    <div class="p-2 bg-secondary bg-opacity-10 rounded text-secondary">
+                        <i class="bi bi-people fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="card kpi-card border-start border-4 border-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-1">Partners on Map</div>
+                        <h3 class="stat-value mt-1 mb-0 text-success">{{ partners_with_location }}</h3>
+                    </div>
+                    <div class="p-2 bg-success bg-opacity-10 rounded text-success">
+                        <i class="bi bi-geo-fill fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="card kpi-card border-start border-4 border-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-1">Active Orders on Map</div>
+                        <h3 class="stat-value mt-1 mb-0 text-primary">{{ active_orders_on_map }}</h3>
+                    </div>
+                    <div class="p-2 bg-primary bg-opacity-10 rounded text-primary">
+                        <i class="bi bi-box-seam fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="card kpi-card border-start border-4 border-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label mb-1">Missing Location</div>
+                        <h3 class="stat-value mt-1 mb-0 {% if missing_location_count > 0 %}text-warning{% endif %}">{{ missing_location_count }}</h3>
+                    </div>
+                    <div class="p-2 bg-warning bg-opacity-10 rounded text-warning">
+                        <i class="bi bi-exclamation-triangle fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ================================================== -->
+<!-- MISSING LOCATION WARNING -->
+<!-- ================================================== -->
+{% if missing_location_count > 0 %}
+<div class="alert alert-warning alert-dismissible fade show mb-4 fade-up delay-2 d-flex align-items-center gap-2" role="alert">
+    <i class="bi bi-exclamation-circle-fill fs-5"></i>
+    <div>
+        <strong>{{ missing_location_count }}</strong> active delivery partner{% if missing_location_count != 1 %}s{% endif %} currently have no reported GPS location.
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<!-- ================================================== -->
+<!-- MAP CONTAINER -->
+<!-- ================================================== -->
+<div class="card table-card fade-up delay-2 mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 px-4 border-bottom flex-wrap gap-2">
+        <div>
+            <strong class="text-dark d-flex align-items-center gap-2 mb-1">
+                <i class="bi bi-map text-success"></i> Live Delivery Locations
+            </strong>
+            <small class="text-muted">Based on the latest location received from the delivery app.</small>
+        </div>
+
+        <div class="d-flex gap-3 small fw-medium">
+            <span class="d-flex align-items-center gap-1">
+                <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background-color:#10b981;"></span> Partner
+            </span>
+            <span class="d-flex align-items-center gap-1">
+                <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background-color:#f59e0b;"></span> Customer
+            </span>
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+        {% if map_partners %}
+            <div id="deliveryMap" style="height: 650px; width: 100%; border-radius: 0 0 16px 16px;"></div>
+        {% else %}
+            <div class="text-center py-5">
+                <div class="d-flex flex-column align-items-center justify-content-center">
+                    <div class="p-4 bg-light rounded-circle mb-3 text-muted">
+                        <i class="bi bi-geo-alt fs-1"></i>
+                    </div>
+                    <h5 class="text-dark fw-bold">No partner locations available</h5>
+                    <p class="text-muted small mb-4">Active delivery partners will appear here after their app reports a GPS location.</p>
+                    <a href="/admin/delivery-partners" class="btn btn-outline-success rounded-pill px-4">
+                        View Delivery Partners
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if map_partners %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ================================================
+    // DATA FROM FASTAPI / JINJA
+    // ================================================
+    const partners = {{ map_partners | tojson }};
+
+    // ================================================
+    // MAP INIT
+    // ================================================
+    const map = L.map('deliveryMap');
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const bounds = [];
+
+    // ================================================
+    // UTILITIES
+    // ================================================
+    function escapeHtml(value) {
+        if (value === null || value === undefined) { return ''; }
+        return String(value)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    // ================================================
+    // ICONS
+    // ================================================
+    const partnerIcon = L.divIcon({
+        className: 'delivery-partner-marker',
+        html: '<div class="partner-pin"><i class="bi bi-truck"></i></div>',
+        iconSize: [42, 42],
+        iconAnchor: [21, 21],
+        popupAnchor: [0, -22]
+    });
+
+    const customerIcon = L.divIcon({
+        className: 'delivery-customer-marker',
+        html: '<div class="customer-pin"><i class="bi bi-house-door-fill"></i></div>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -16]
+    });
+
+    // ================================================
+    // RENDER MARKERS
+    // ================================================
+    partners.forEach(function (partner) {
+        const lat = Number(partner.latitude);
+        const lng = Number(partner.longitude);
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+        bounds.push([lat, lng]);
+
+        // Build active order list HTML
+        let ordersHtml = '';
+        partner.orders.forEach(function (order) {
+            ordersHtml += `
+                <div class="map-order-item">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong class="font-monospace text-dark">#${escapeHtml(order.order_number)}</strong>
+                        <span class="map-status">${escapeHtml(order.status.replaceAll('_', ' '))}</span>
+                    </div>
+                    <div class="map-small fw-medium text-dark"><i class="bi bi-person me-1"></i>${escapeHtml(order.customer)}</div>
+                    <div class="map-small map-muted"><i class="bi bi-geo-alt me-1"></i>${escapeHtml(order.village_town)}, ${escapeHtml(order.district)}</div>
+                    <a href="/admin/delivery-assignments/order/${order.order_id}" class="map-link">
+                        Details <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </div>
+            `;
+        });
+
+        // Location age text
+        let locationText = 'Time unavailable';
+        if (partner.location_age_minutes !== null) {
+            locationText = `${partner.location_age_minutes} min ago`;
+        }
+
+        // Partner Popup HTML
+        const popupHtml = `
+            <div class="delivery-map-popup">
+                <div class="map-popup-title">${escapeHtml(partner.name)}</div>
+                <div class="map-small map-muted"><i class="bi bi-telephone me-1"></i>${escapeHtml(partner.phone)}</div>
+                <div class="map-small map-muted mt-1">
+                    <i class="bi bi-bicycle me-1"></i>${escapeHtml(partner.vehicle_type || 'Vehicle')}
+                    ${partner.vehicle_number ? ' <span class="border px-1 rounded bg-light ms-1 font-monospace">' + escapeHtml(partner.vehicle_number) + '</span>' : ''}
+                </div>
+
+                <div class="mt-2 mb-3">
+                    <span class="map-badge ${partner.is_online ? 'map-online' : 'map-offline'}">
+                        ${partner.is_online ? '<span class="spinner-grow spinner-grow-sm me-1" style="width: 4px; height: 4px;"></span> Online' : 'Offline'}
+                    </span>
+                    <span class="map-badge map-workload">
+                        ${partner.orders.length} active
+                    </span>
+                </div>
+
+                <div class="map-small map-muted bg-light p-2 rounded mb-3 border">
+                    <i class="bi bi-broadcast me-1"></i> GPS updated: <strong>${locationText}</strong>
+                </div>
+
+                <div style="font-weight: 600; font-size: 0.85rem; color: #374151; margin-bottom: 8px; border-bottom: 2px solid #f3f4f6; padding-bottom: 4px;">
+                    Active Deliveries
+                </div>
+
+                ${ordersHtml}
+
+                <div class="mt-3 text-center">
+                    <a href="/admin/delivery-partners/${partner.partner_id}" class="btn btn-sm btn-light border w-100 fw-medium">
+                        View Partner Profile
+                    </a>
+                </div>
+            </div>
+        `;
+
+        // Add Partner Marker
+        L.marker([lat, lng], { icon: partnerIcon })
+            .addTo(map)
+            .bindPopup(popupHtml, { maxWidth: 320 });
+
+        // Add Customer Destinations
+        partner.orders.forEach(function (order) {
+            if (order.customer_latitude === null || order.customer_longitude === null) return;
+
+            const customerLat = Number(order.customer_latitude);
+            const customerLng = Number(order.customer_longitude);
+
+            if (!Number.isFinite(customerLat) || !Number.isFinite(customerLng)) return;
+
+            bounds.push([customerLat, customerLng]);
+
+            const customerPopup = `
+                <div class="delivery-map-popup">
+                    <div class="map-popup-title font-monospace text-success">#${escapeHtml(order.order_number)}</div>
+                    <div class="map-small fw-medium text-dark mt-2"><i class="bi bi-person me-1"></i>${escapeHtml(order.customer)}</div>
+                    <div class="map-small map-muted"><i class="bi bi-telephone me-1"></i>${escapeHtml(order.customer_phone)}</div>
+                    <div class="map-small map-muted mt-2 lh-sm border-top pt-2">
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                        ${escapeHtml(order.village_town)}, ${escapeHtml(order.district)}
+                    </div>
+                    <div class="mt-3">
+                        <a href="/admin/delivery-assignments/order/${order.order_id}" class="btn btn-sm btn-outline-success w-100">
+                            Assignment Details
+                        </a>
+                    </div>
+                </div>
+            `;
+
+            L.marker([customerLat, customerLng], { icon: customerIcon })
+                .addTo(map)
+                .bindPopup(customerPopup, { maxWidth: 280 });
+
+            // Draw line between Partner and Customer
+            L.polyline([[lat, lng], [customerLat, customerLng]], {
+                color: '#10b981', // Match theme
+                weight: 2,
+                opacity: 0.6,
+                dashArray: '5, 8'
+            }).addTo(map);
+        });
+    });
+
+    // ================================================
+    // FIT MAP TO BOUNDS
+    // ================================================
+    if (bounds.length === 1) {
+        map.setView(bounds[0], 14);
+    } else if (bounds.length > 1) {
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+    } else {
+        // Fallback to center of India if no bounds
+        map.setView([20.5937, 78.9629], 5);
+    }
+});
+</script>
+{% endif %}
+
+{% endblock %}

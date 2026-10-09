@@ -20,3 +20,4 @@ build/
 secrets/
 *.service-account.json
 firebase-service-account.json
+gramago-delivery-58687-firebase-adminsdk-fbsvc-fb216d04e9.json

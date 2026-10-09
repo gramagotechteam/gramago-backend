@@ -32,6 +32,15 @@ from app.api.v1.endpoints import (
     admin_notifications,
     admin_commerce_settings,
     commerce,
+    admin_delivery_partners,
+    delivery_auth,
+    delivery_status,
+    admin_delivery_assignments,
+    delivery_orders,
+)
+
+from app.api.v1.endpoints import (
+    delivery_notifications,
 )
 
 
@@ -170,4 +179,59 @@ api_router.include_router(
     commerce.router,
     prefix="/commerce",
     tags=["Commerce"],
+)
+
+
+
+api_router.include_router(
+    admin_delivery_partners.router,
+    prefix="/admin/delivery-partners",
+    tags=["Admin Delivery Partners"],
+)
+
+
+
+api_router.include_router(
+    delivery_auth.router,
+    prefix="/delivery/auth",
+    tags=["Delivery Authentication"],
+)
+
+
+
+
+api_router.include_router(
+    delivery_status.router,
+    prefix="/delivery/status",
+    tags=["Delivery Status"],
+)
+
+
+
+api_router.include_router(
+    admin_delivery_assignments.router,
+    prefix="/admin/delivery-assignments",
+    tags=["Admin Delivery Assignments"],
+)
+
+
+
+
+api_router.include_router(
+    delivery_orders.router,
+    prefix="/delivery/orders",
+    tags=["Delivery Orders"],
+)
+
+
+api_router.include_router(
+    delivery_notifications.router,
+
+    prefix=(
+        "/delivery/notifications"
+    ),
+
+    tags=[
+        "Delivery Notifications"
+    ],
 )

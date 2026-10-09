@@ -1,0 +1,314 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+Add Delivery Partner | GramaGo Admin
+{% endblock %}
+
+{% block page_title %}
+Add Delivery Partner
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Staggered Fade-in Animation */
+    .fade-up {
+        animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card Styling */
+    .form-card {
+        border: none;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    .form-card .card-header {
+        border-bottom: 1px solid #f3f4f6;
+        padding: 1.5rem 2rem;
+        background-color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .form-card .card-header strong {
+        font-size: 1.15rem;
+        color: #1f2937;
+        letter-spacing: -0.3px;
+    }
+
+    .form-card .card-body {
+        padding: 2rem;
+    }
+
+    /* Section Titles */
+    .section-title {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #374151;
+        border-bottom: 2px solid #f3f4f6;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Form Elements Enhancements */
+    .form-label {
+        font-weight: 500;
+        color: #4b5563;
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 0.75rem 1.25rem;
+        border: 1px solid #d1d5db;
+        font-size: 1rem;
+        color: #374151;
+        background-color: #f9fafb;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .form-control:focus, .form-select:focus {
+        background-color: #ffffff;
+        border-color: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        outline: none;
+    }
+    
+    .form-text {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 0.4rem;
+    }
+
+    .required-asterisk {
+        color: #ef4444;
+        margin-left: 2px;
+    }
+
+    /* Custom Info Alert */
+    .custom-info-alert {
+        background-color: #f0f9ff;
+        border: none;
+        border-left: 4px solid #0ea5e9;
+        border-radius: 8px;
+        color: #0369a1;
+        padding: 1.25rem;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .custom-info-alert strong {
+        color: #0c4a6e;
+    }
+
+    /* Action Buttons */
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+</style>
+
+<div class="row justify-content-center">
+    
+    <div class="col-12 col-xl-8 col-lg-10">
+
+        <!-- Top Navigation / Header -->
+        <div class="d-flex align-items-center justify-content-between mb-4 fade-up">
+            <a href="/admin/delivery-partners" class="btn btn-light rounded-pill px-3 shadow-sm d-inline-flex align-items-center gap-2 text-decoration-none">
+                <i class="bi bi-arrow-left"></i> Back to Partners
+            </a>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger alert-dismissible fade show mb-4 fade-up d-flex align-items-center gap-2" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            {{ error }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+
+        <div class="card form-card fade-up delay-1">
+
+            <div class="card-header">
+                <div class="p-2 bg-success bg-opacity-10 rounded text-success d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                    <i class="bi bi-person-plus-fill"></i>
+                </div>
+                <strong>Create Delivery Partner</strong>
+            </div>
+
+            <div class="card-body">
+
+                <form method="post" action="/admin/delivery-partners/create">
+                    
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token(request) }}">
+
+                    <!-- ================================= -->
+                    <!-- PERSONAL INFORMATION -->
+                    <!-- ================================= -->
+                    <div class="section-title">
+                        <i class="bi bi-person-vcard text-muted"></i> Personal Information
+                    </div>
+
+                    <div class="row g-4 mb-5">
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-person text-muted"></i> Full Name <span class="required-asterisk">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="full_name"
+                                class="form-control"
+                                required
+                                maxlength="150"
+                                value="{{ form_data.get('full_name', '') }}"
+                                placeholder="Enter full name"
+                            >
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-telephone text-muted"></i> Phone Number <span class="required-asterisk">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="phone"
+                                class="form-control"
+                                required
+                                value="{{ form_data.get('phone', '') }}"
+                                placeholder="e.g. 9876543210"
+                            >
+                            <div class="form-text">Active mobile number for the partner.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-envelope text-muted"></i> Email Address
+                            </label>
+                            <input
+                                type="email"
+                                name="email"
+                                class="form-control"
+                                value="{{ form_data.get('email', '') }}"
+                                placeholder="partner@example.com"
+                            >
+                            <div class="form-text">Optional but recommended.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-shield-lock text-muted"></i> Password <span class="required-asterisk">*</span>
+                            </label>
+                            <input
+                                type="password"
+                                name="password"
+                                class="form-control"
+                                required
+                                autocomplete="new-password"
+                                placeholder="Create login password"
+                            >
+                            <div class="form-text">Used to login to the Delivery app.</div>
+                        </div>
+
+                    </div>
+
+                    <!-- ================================= -->
+                    <!-- VEHICLE INFORMATION -->
+                    <!-- ================================= -->
+                    <div class="section-title">
+                        <i class="bi bi-bicycle text-muted"></i> Vehicle Information
+                    </div>
+
+                    <div class="row g-4 mb-4">
+
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-ui-checks-grid text-muted"></i> Vehicle Type
+                            </label>
+                            <select name="vehicle_type" class="form-select">
+                                <option value="">Select vehicle type</option>
+                                <option value="Bike" {% if form_data.get('vehicle_type') == 'Bike' %}selected{% endif %}>Bike</option>
+                                <option value="Scooter" {% if form_data.get('vehicle_type') == 'Scooter' %}selected{% endif %}>Scooter</option>
+                                <option value="Bicycle" {% if form_data.get('vehicle_type') == 'Bicycle' %}selected{% endif %}>Bicycle</option>
+                                <option value="Auto" {% if form_data.get('vehicle_type') == 'Auto' %}selected{% endif %}>Auto</option>
+                                <option value="Other" {% if form_data.get('vehicle_type') == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-123 text-muted"></i> Vehicle Number
+                            </label>
+                            <input
+                                type="text"
+                                name="vehicle_number"
+                                class="form-control text-uppercase"
+                                value="{{ form_data.get('vehicle_number', '') }}"
+                                placeholder="e.g. TS09AB1234"
+                            >
+                        </div>
+
+                    </div>
+
+                    <!-- ================================= -->
+                    <!-- INFORMATION NOTE -->
+                    <!-- ================================= -->
+                    <div class="custom-info-alert mt-5 mb-4">
+                        <div class="d-flex gap-3">
+                            <i class="bi bi-info-circle-fill fs-4 mt-1"></i>
+                            <div>
+                                <strong>System Note:</strong><br>
+                                The partner account will be created as active and verified, but the delivery profile will initially remain in a <strong>pending approval</strong> state. You can approve it from their profile page.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================================= -->
+                    <!-- ACTIONS -->
+                    <!-- ================================= -->
+                    <div class="d-flex flex-column flex-sm-row gap-3 pt-2 border-top">
+                        <button type="submit" class="btn btn-success btn-action flex-grow-1">
+                            <i class="bi bi-check-lg"></i> Create Delivery Partner
+                        </button>
+                        
+                        <a href="/admin/delivery-partners" class="btn btn-light btn-action flex-grow-1 text-decoration-none">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </a>
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

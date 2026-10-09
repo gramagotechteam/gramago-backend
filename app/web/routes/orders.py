@@ -196,10 +196,40 @@ async def order_detail(
         )
     )
 
-    allowed_transitions = list(
-        ORDER_TRANSITIONS.get(
+    # allowed_transitions = list(
+    #     ORDER_TRANSITIONS.get(
+    #         order.order_status,
+    #         set(),
+    #     )
+    # )
+    
+    
+
+
+    # =========================================================
+    # ADMIN MAY CONTROL ORDER ONLY UNTIL PACKED
+    # =========================================================
+
+    ADMIN_PREPARATION_TRANSITIONS = {
+
+        "PLACED": [
+            "CONFIRMED",
+        ],
+
+        "CONFIRMED": [
+            "PROCESSING",
+        ],
+
+        "PROCESSING": [
+            "PACKED",
+        ],
+    }
+
+
+    allowed_transitions = (
+        ADMIN_PREPARATION_TRANSITIONS.get(
             order.order_status,
-            set(),
+            []
         )
     )
 
@@ -240,6 +270,161 @@ async def order_detail(
     )
 
 
+
+
+
+
+
+# ==========================================
+# Bulk Advance Orders
+# ==========================================
+
+@router.post(
+    "/orders/bulk-advance",
+    dependencies=[
+        Depends(validate_csrf)
+    ],
+)
+async def bulk_advance_orders(
+    request: Request,
+
+    order_ids: list[int] = Form(
+        default=[]
+    ),
+
+    current_admin: User = Depends(
+        get_admin_web_user
+    ),
+
+    db: AsyncSession = Depends(
+        get_db
+    ),
+):
+
+    if not order_ids:
+
+        flash(
+            request,
+            "Please select at least one order.",
+            "warning",
+        )
+
+        return RedirectResponse(
+            url="/admin/orders",
+            status_code=303,
+        )
+
+    service = AdminOrderService(
+        db
+    )
+
+    # Admin can advance only through these states.
+    next_status_map = {
+        "PLACED": "CONFIRMED",
+        "CONFIRMED": "PROCESSING",
+        "PROCESSING": "PACKED",
+    }
+
+    updated_count = 0
+    skipped_count = 0
+    failed_count = 0
+
+    for order_id in order_ids:
+
+        repository = AdminOrderRepository(
+            db
+        )
+
+        order = (
+            await repository.get_by_id(
+                order_id
+            )
+        )
+
+        if order is None:
+            failed_count += 1
+            continue
+
+        new_status = next_status_map.get(
+            order.order_status
+        )
+
+        # PACKED and delivery-controlled
+        # statuses are never changed here.
+        if new_status is None:
+            skipped_count += 1
+            continue
+
+        try:
+
+            await service.update_status(
+                order_id=order.id,
+                new_status=new_status,
+                admin_id=current_admin.id,
+                note=(
+                    "Bulk status update "
+                    "from Admin Orders page"
+                ),
+            )
+
+            updated_count += 1
+
+        except HTTPException:
+
+            failed_count += 1
+
+    if updated_count > 0:
+
+        message = (
+            f"{updated_count} order"
+            f"{'s' if updated_count != 1 else ''} "
+            f"advanced successfully."
+        )
+
+        if skipped_count:
+
+            message += (
+                f" {skipped_count} already packed "
+                f"or delivery-controlled "
+                f"order"
+                f"{'s were' if skipped_count != 1 else ' was'} "
+                f"skipped."
+            )
+
+        if failed_count:
+
+            message += (
+                f" {failed_count} order"
+                f"{'s' if failed_count != 1 else ''} "
+                f"could not be updated."
+            )
+
+        flash(
+            request,
+            message,
+            "success",
+        )
+
+    else:
+
+        flash(
+            request,
+            (
+                "No selected orders were eligible "
+                "for an admin status update."
+            ),
+            "warning",
+        )
+
+    return RedirectResponse(
+        url="/admin/orders",
+        status_code=303,
+    )
+    
+    
+    
+    
+    
 # ==========================================
 # Update Order Status
 # ==========================================

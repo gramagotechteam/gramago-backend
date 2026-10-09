@@ -357,6 +357,67 @@
     Commerce Settings
 </a>
 
+ <a
+  class="nav-link
+    {% if active_page == 'delivery_partners' %}
+    active
+    {% endif %}"
+        href="/admin/delivery-partners"
+      
+    >
+        Delivery Partners
+    </a>
+
+    <a
+    class="nav-link
+    {% if active_page == 'Ready_orders' %}
+    active
+    {% endif %}"
+        href="/admin/delivery-assignments/ready"
+    >
+        Ready for Delivery
+    </a>
+
+
+
+
+     <a  class="nav-link
+        
+    {% if active_page == 'active_orders' %}
+    active
+    {% endif %}"
+    
+        href="/admin/delivery-assignments/active">
+      
+        Active Deliveries
+    </a>
+
+
+      <a
+
+       class="nav-link
+    {% if active_page == 'history' %}
+    active
+    {% endif %}"
+        href="/admin/delivery-assignments/history"
+       
+    >
+        Delivery History
+    </a>
+
+
+     <a
+      class="nav-link
+    {% if active_page == 'map' %}
+    active
+    {% endif %}"
+        href="/admin/delivery-assignments/map"
+       
+    >
+        Delivery Map
+    </a>
+
+    
         </nav>
 
     </aside>

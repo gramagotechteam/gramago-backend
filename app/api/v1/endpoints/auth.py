@@ -62,12 +62,6 @@ from app.schemas.user import (
     UserResponse,
 )
 
-# from app.schemas.auth import (
-#     ChangePasswordRequest,
-#     LoginRequest,
-#     LogoutRequest,
-#     RefreshTokenRequest,
-# )
 
 from app.schemas.auth import (
     ChangePasswordRequest,
@@ -101,42 +95,6 @@ from app.schemas.auth import (
 router = APIRouter()
 
 
-# @router.post(
-#     "/register",
-#     status_code=status.HTTP_201_CREATED,
-# )
-# async def register(
-#     data: UserRegister,
-#     db: AsyncSession = Depends(get_db),
-# ):
-
-#     service = AuthService(db)
-
-#     user = await service.register(data)
-    
-#     if user.email:
-
-#         try:
-#             await service.send_verification(
-#                 user
-#             )
-
-#         except Exception:
-#             logger.exception(
-#                 "Registration verification email failed"
-#             )
-
-#     return {
-#         "success": True,
-#         "message": "Registration successful",
-#         "data": UserResponse.model_validate(
-#             user
-#         ),
-#     }
-
-
-
-
 @router.post(
     "/register",
     status_code=status.HTTP_201_CREATED,
@@ -168,12 +126,6 @@ async def register(
         "data": result,
     }
     
-
-
-
-
-
-
 
 
 
@@ -230,10 +182,6 @@ async def verify_registration_otp(
     
     
     
-    
-    
-    
-    
 @router.post(
     "/resend-registration-otp"
 )
@@ -272,18 +220,7 @@ async def resend_registration_otp(
     }
     
     
-    
-
-
-
-
-
-# @router.post("/refresh")
-# async def refresh_token(
-#     data: RefreshTokenRequest,
-#     db: AsyncSession = Depends(get_db),
-# ):
-
+ 
 @router.post("/refresh")
 async def refresh_token(
     data: RefreshTokenRequest,
@@ -306,49 +243,6 @@ async def refresh_token(
         "data": result,
     }
     
-
-# @router.post("/login")
-# async def login(
-#     data: LoginRequest,
-#     db: AsyncSession = Depends(get_db),
-# ):
-
-
-
-
-
-
-
-# @router.post("/login")
-# async def login(
-#     data: LoginRequest,
-#     _: None = Depends(
-#         login_limiter
-#     ),
-#     db: AsyncSession = Depends(get_db),
-# ):
-#     service = AuthService(db)
-
-#     result = await service.login(
-#         data.identifier,
-#         data.password,
-#     )
-
-#     user = result.pop("user")
-
-#     return {
-#         "success": True,
-#         "message": "Login successful",
-#         "data": {
-#             **result,
-#             "user": UserResponse.model_validate(
-#                 user
-#             ),
-#         },
-#     }
-    
-    
-
 
 @router.post("/login")
 async def login(
@@ -586,43 +480,6 @@ async def change_password(
     
 
 
-
-
-
-# @router.post("/forgot-password")
-# async def forgot_password(
-#     data: ForgotPasswordRequest,
-#     db: AsyncSession = Depends(get_db),
-# ):
-
-# @router.post("/forgot-password")
-# async def forgot_password(
-#     data: ForgotPasswordRequest,
-
-#     _: None = Depends(
-#         forgot_password_limiter
-#     ),
-
-#     db: AsyncSession = Depends(get_db),
-# ):
-#     service = AuthService(db)
-
-#     await service.forgot_password(
-#         data.email
-#     )
-
-#     return {
-#         "success": True,
-#         "message": (
-#             "If an account exists with that email, "
-#             "password reset instructions have been sent."
-#         ),
-#         "data": None,
-#     }
-    
-    
-
-
 @router.post(
     "/forgot-password"
 )
@@ -659,34 +516,6 @@ async def forgot_password(
         "data": result,
     }
 
-
-# @router.post("/reset-password")
-# async def reset_password(
-#     data: ResetPasswordRequest,
-#     db: AsyncSession = Depends(get_db),
-# ):
-
-#     service = AuthService(db)
-
-#     await service.reset_password(
-#         raw_token=data.token,
-#         new_password=data.new_password,
-#     )
-
-#     return {
-#         "success": True,
-#         "message": (
-#             "Password reset successfully. "
-#             "Please login again."
-#         ),
-#         "data": None,
-#     }
-    
-    
-    
-    
-    
-    
 
 @router.post(
     "/reset-password"
@@ -734,14 +563,6 @@ async def reset_password(
         },
     }
 
-
-# @router.post("/send-verification")
-# async def send_verification(
-#     current_user: User = Depends(
-#         get_current_user
-#     ),
-#     db: AsyncSession = Depends(get_db),
-# ):
 
 @router.post("/send-verification")
 async def send_verification(
@@ -899,8 +720,3 @@ async def resend_password_reset_otp(
         ),
         "data": result,
     }
-    
-    
-    
-    
-    

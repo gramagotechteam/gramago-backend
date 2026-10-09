@@ -110,10 +110,22 @@ class User(Base):
     "PhoneOtpSession",
     cascade="all, delete-orphan",
 )
+    
+    delivery_profile = relationship(
+    "DeliveryPartnerProfile",
+    back_populates="user",
+    uselist=False,
+    cascade="all, delete-orphan",
+)
+
+    delivery_assignments = relationship(
+    "DeliveryAssignment",
+    back_populates="delivery_partner",
+)
 
     __table_args__ = (
         CheckConstraint(
-            "role IN ('CUSTOMER', 'ADMIN', 'SUPER_ADMIN')",
+            "role IN ('CUSTOMER', 'ADMIN', 'SUPER_ADMIN', 'DELIVERY_PARTNER')",
             name="chk_users_role",
         ),
     )

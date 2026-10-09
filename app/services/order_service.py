@@ -271,7 +271,7 @@ class OrderService:
             # ---------------------------------
             
             
-            await notification_service.create(
+            await self.notification_service.create(
     user_id=user_id,
     notification_type="ORDER_CANCELLED",
     title="Order cancelled",

@@ -1,0 +1,458 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+Delivery Assignment Details
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Staggered Fade-in Animation */
+    .fade-up {
+        animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card & Container Styling */
+    .detail-card {
+        border: none;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-card .card-header {
+        background-color: #ffffff;
+        border-bottom: 1px solid #f3f4f6;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .detail-card .card-header strong,
+    .detail-card .card-header h5 {
+        font-size: 1.05rem;
+        color: #1f2937;
+        letter-spacing: -0.3px;
+        margin: 0;
+    }
+
+    .kpi-card {
+        border: none;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        height: 100%;
+    }
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    }
+    .kpi-card .card-body {
+        padding: 1.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        color: #6b7280;
+    }
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #111827;
+        letter-spacing: -0.5px;
+    }
+
+    /* Soft Badges */
+    .badge-soft {
+        padding: 0.4em 0.8em;
+        font-weight: 600;
+        font-size: 0.75rem;
+        letter-spacing: 0.3px;
+        border-radius: 6px;
+    }
+    .badge-soft-success { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .badge-soft-warning { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge-soft-primary { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-soft-danger { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge-soft-secondary { background-color: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+    .badge-soft-info { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+</style>
+
+<div class="container-fluid px-0">
+
+    <!-- ===================================================== -->
+    <!-- HEADER -->
+    <!-- ===================================================== -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 fade-up">
+        <div class="d-flex align-items-center gap-3">
+            <div class="p-2 bg-success bg-opacity-10 rounded text-success d-none d-sm-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                <i class="bi bi-clock-history fs-4"></i>
+            </div>
+            <div>
+                <h4 class="mb-1 fw-bold text-dark">
+                    Delivery Assignment
+                </h4>
+                <small class="text-muted">
+                    Complete delivery history for <strong class="text-dark font-monospace">#{{ order.order_number }}</strong>
+                </small>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/admin/orders/{{ order.id }}" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm d-flex align-items-center gap-2 text-decoration-none">
+                <i class="bi bi-eye"></i> View Order
+            </a>
+            <a href="/admin/delivery-assignments/ready" class="btn btn-outline-success rounded-pill px-3 shadow-sm d-flex align-items-center gap-2 text-decoration-none">
+                <i class="bi bi-box2-heart"></i> Ready Orders
+            </a>
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- ORDER SUMMARY -->
+    <!-- ===================================================== -->
+    <div class="row g-3 mb-4 fade-up delay-1">
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card kpi-card border-start border-4 border-secondary">
+                <div class="card-body">
+                    <div class="stat-label mb-1">Order Number</div>
+                    <h3 class="stat-value mt-1 mb-0 font-monospace text-success">{{ order.order_number }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card kpi-card border-start border-4 border-success">
+                <div class="card-body">
+                    <div class="stat-label mb-1">Order Status</div>
+                    <div class="mt-2">
+                        {% if order.order_status == 'DELIVERED' %}
+                            <span class="badge-soft badge-soft-success">Delivered</span>
+                        {% elif order.order_status == 'CANCELLED' %}
+                            <span class="badge-soft badge-soft-danger">Cancelled</span>
+                        {% elif order.order_status == 'OUT_FOR_DELIVERY' %}
+                            <span class="badge-soft badge-soft-primary">Out for Delivery</span>
+                        {% elif order.order_status == 'ASSIGNED' %}
+                            <span class="badge-soft badge-soft-info">Assigned</span>
+                        {% else %}
+                            <span class="badge-soft badge-soft-secondary">{{ order.order_status.replace("_", " ") }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card kpi-card border-start border-4 border-primary">
+                <div class="card-body">
+                    <div class="stat-label mb-1">Payment</div>
+                    <div class="mt-2">
+                        {% if order.payment_status == "PAID" %}
+                            <span class="badge-soft badge-soft-success">Paid</span>
+                        {% else %}
+                            <span class="badge-soft badge-soft-warning">{{ order.payment_status }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card kpi-card border-start border-4 border-warning">
+                <div class="card-body">
+                    <div class="stat-label mb-1">Assignment Attempts</div>
+                    <h3 class="stat-value mt-1 mb-0">{{ assignment_count }}</h3>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- CURRENT ASSIGNMENT -->
+    <!-- ===================================================== -->
+    {% if current_assignment %}
+    {% set current = current_assignment.assignment %}
+    {% set current_partner = current_assignment.partner %}
+
+    <div class="card detail-card border-start border-4 border-success mb-4 fade-up delay-2">
+        <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
+            <strong class="text-dark d-flex align-items-center gap-2">
+                <i class="bi bi-broadcast-pin text-success"></i> Current Active Assignment
+            </strong>
+            <span class="badge-soft badge-soft-success">
+                {{ current.status.replace("_", " ") }}
+            </span>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <span class="stat-label mb-1">Delivery Partner</span>
+                    <div class="fw-semibold text-dark mt-1">
+                        {% if current_partner %}
+                            {{ current_partner.full_name }}
+                        {% else %}
+                            Partner #{{ current.delivery_partner_id }}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <span class="stat-label mb-1">Phone</span>
+                    <div class="fw-medium text-dark mt-1">
+                        {% if current_partner %}
+                            <i class="bi bi-telephone text-muted me-1"></i>{{ current_partner.phone }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <span class="stat-label mb-1">Assigned At</span>
+                    <div class="fw-medium text-muted small mt-1">
+                        {% if current.assigned_at %}
+                            <i class="bi bi-calendar2 text-muted me-1"></i>{{ current.assigned_at | india_time }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <span class="stat-label mb-1">Status</span>
+                    <div class="mt-1">
+                        <span class="badge-soft badge-soft-success">
+                            {{ current.status.replace("_", " ") }}
+                        </span>
+                    </div>
+                </div>
+
+                {% if current.delivery_note %}
+                <div class="col-12 pt-2 border-top">
+                    <span class="stat-label mb-1">Delivery Note</span>
+                    <div class="text-secondary small mt-1">
+                        {{ current.delivery_note }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ===================================================== -->
+    <!-- CUSTOMER / DELIVERY -->
+    <!-- ===================================================== -->
+    <div class="card detail-card mb-4 fade-up delay-2">
+        <div class="card-header bg-white py-3 px-4">
+            <strong class="text-dark"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Delivery Information</strong>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6">
+                    <span class="stat-label mb-1">Customer</span>
+                    <div class="fw-semibold text-dark mt-1">{{ order.delivery_full_name }}</div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <span class="stat-label mb-1">Phone</span>
+                    <div class="fw-medium text-dark mt-1"><i class="bi bi-telephone text-muted me-1"></i>{{ order.delivery_phone }}</div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <span class="stat-label mb-1">Amount</span>
+                    <div class="fw-bold text-success mt-1">₹{{ "%.2f" | format(order.total_amount) }}</div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <span class="stat-label mb-1">Location</span>
+                    <div class="fw-medium text-dark mt-1">{{ order.delivery_village_town }}, {{ order.delivery_district }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- ASSIGNMENT HISTORY -->
+    <!-- ===================================================== -->
+    <div class="card detail-card fade-up delay-3">
+        <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
+            <strong class="text-dark"><i class="bi bi-card-checklist text-primary me-1"></i> Assignment History</strong>
+            <span class="badge badge-soft-secondary border fs-6">{{ assignment_count }} attempt{% if assignment_count != 1 %}s{% endif %}</span>
+        </div>
+
+        <div class="card-body p-4">
+            {% if assignment_rows %}
+                {% for row in assignment_rows %}
+                {% set assignment = row.assignment %}
+                {% set partner = row.partner %}
+
+                <div class="border rounded-4 p-4 mb-3 bg-light bg-opacity-25">
+                    <!-- Assignment Header -->
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3 pb-2 border-bottom">
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <h6 class="mb-0 fw-bold text-dark">
+                                    {% if partner %}
+                                        {{ partner.full_name }}
+                                    {% else %}
+                                        Delivery Partner #{{ assignment.delivery_partner_id }}
+                                    {% endif %}
+                                </h6>
+                                {% if row.is_active %}
+                                    <span class="badge-soft badge-soft-success">Current</span>
+                                {% endif %}
+                            </div>
+                            <div class="small text-muted mt-1 font-monospace">
+                                Assignment #{{ assignment.id }} {% if partner %} • {{ partner.phone }}{% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Status Badge -->
+                        <div>
+                            {% if assignment.status == "DELIVERED" %}
+                                <span class="badge-soft badge-soft-success">Delivered</span>
+                            {% elif assignment.status == "REJECTED" %}
+                                <span class="badge-soft badge-soft-danger">Rejected</span>
+                            {% elif assignment.status == "FAILED" %}
+                                <span class="badge-soft badge-soft-danger">Failed</span>
+                            {% elif assignment.status == "CANCELLED" %}
+                                <span class="badge-soft badge-soft-secondary">Cancelled</span>
+                            {% elif assignment.status == "OUT_FOR_DELIVERY" %}
+                                <span class="badge-soft badge-soft-primary">Out for Delivery</span>
+                            {% elif assignment.status == "PICKED_UP" %}
+                                <span class="badge-soft badge-soft-info">Picked Up</span>
+                            {% elif assignment.status == "ACCEPTED" %}
+                                <span class="badge-soft badge-soft-primary">Accepted</span>
+                            {% else %}
+                                <span class="badge-soft badge-soft-warning">Assigned</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div class="row g-3">
+                        <div class="col-xl-3 col-md-6">
+                            <span class="stat-label mb-1">Assigned</span>
+                            <div class="small text-dark fw-medium mt-1">{% if assignment.assigned_at %}{{ assignment.assigned_at | india_time }}{% else %}—{% endif %}</div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6">
+                            <span class="stat-label mb-1">Accepted</span>
+                            <div class="small text-dark fw-medium mt-1">{% if assignment.accepted_at %}{{ assignment.accepted_at | india_time }}{% else %}—{% endif %}</div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6">
+                            <span class="stat-label mb-1">Picked Up</span>
+                            <div class="small text-dark fw-medium mt-1">{% if assignment.picked_up_at %}{{ assignment.picked_up_at | india_time }}{% else %}—{% endif %}</div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6">
+                            <span class="stat-label mb-1">Out for Delivery</span>
+                            <div class="small text-dark fw-medium mt-1">{% if assignment.out_for_delivery_at %}{{ assignment.out_for_delivery_at | india_time }}{% else %}—{% endif %}</div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6">
+                            <span class="stat-label mb-1">Delivered</span>
+                            <div class="small text-dark fw-medium mt-1">{% if assignment.delivered_at %}{{ assignment.delivered_at | india_time }}{% else %}—{% endif %}</div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6">
+                            <span class="stat-label mb-1">Rejected</span>
+                            <div class="small text-dark fw-medium mt-1">{% if assignment.rejected_at %}{{ assignment.rejected_at | india_time }}{% else %}—{% endif %}</div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6">
+                            <span class="stat-label mb-1">Failed</span>
+                            <div class="small text-dark fw-medium mt-1">{% if assignment.failed_at %}{{ assignment.failed_at | india_time }}{% else %}—{% endif %}</div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6">
+                            <span class="stat-label mb-1">Cancelled</span>
+                            <div class="small text-dark fw-medium mt-1">{% if assignment.cancelled_at %}{{ assignment.cancelled_at | india_time }}{% else %}—{% endif %}</div>
+                        </div>
+                    </div>
+
+                    <!-- Notes / Failure Information -->
+                    {% if assignment.delivery_note or assignment.rejection_reason or assignment.failure_reason %}
+                    <hr class="my-3 text-muted opacity-25">
+                    <div class="row g-3">
+                        {% if assignment.delivery_note %}
+                        <div class="col-md-6">
+                            <span class="stat-label mb-1">Delivery Note</span>
+                            <div class="small text-secondary mt-1">{{ assignment.delivery_note }}</div>
+                        </div>
+                        {% endif %}
+
+                        {% if assignment.rejection_reason %}
+                        <div class="col-md-6">
+                            <span class="stat-label mb-1 text-danger">Rejection Reason</span>
+                            <div class="small text-danger fw-medium mt-1">{{ assignment.rejection_reason }}</div>
+                        </div>
+                        {% endif %}
+
+                        {% if assignment.failure_reason %}
+                        <div class="col-md-6">
+                            <span class="stat-label mb-1 text-danger">Failure Reason</span>
+                            <div class="small text-danger fw-medium mt-1">{{ assignment.failure_reason }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- COD -->
+                    {% if assignment.cod_collected_at %}
+                    <hr class="my-3 text-muted opacity-25">
+                    <div class="alert alert-success bg-success bg-opacity-10 border border-success-subtle text-success small mb-0 d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong class="me-2"><i class="bi bi-check-circle-fill me-1"></i> COD Collected</strong>
+                            {% if assignment.cod_collected_amount is not none %}
+                                ₹{{ "%.2f" | format(assignment.cod_collected_amount) }}
+                            {% endif %}
+                        </div>
+                        <span class="text-muted">{{ assignment.cod_collected_at | india_time }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="d-flex flex-column align-items-center justify-content-center text-muted">
+                        <div class="p-4 bg-light rounded-circle mb-3">
+                            <i class="bi bi-inbox fs-1"></i>
+                        </div>
+                        <h5 class="text-dark fw-bold">No delivery assignments yet</h5>
+                        <p class="text-muted small mb-3">This order has not been assigned to a delivery partner.</p>
+
+                        {% if order.order_status in ["PACKED", "READY_FOR_PICKUP"] %}
+                        <a href="/admin/delivery-assignments/{{ order.id }}/assign" class="btn btn-success rounded-pill px-4">
+                            <i class="bi bi-person-plus me-1"></i> Assign Delivery Partner
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

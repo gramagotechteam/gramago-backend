@@ -21,6 +21,10 @@ from app.repositories.refresh_token_repository import (
     RefreshTokenRepository,
 )
 
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+
+
 
 from app.core.otp_security import (
     generate_challenge_id,
@@ -3315,3 +3319,206 @@ class AuthService:
             )
             + phone[-4:]
         )
+        
+        
+        
+    async def delivery_login(
+        self,
+        identifier: str,
+        password: str,
+    ) -> dict:
+
+        identifier = identifier.strip()
+
+        # =========================================================
+        # NORMALIZE IDENTIFIER
+        # =========================================================
+
+        if "@" in identifier:
+            identifier = (
+                identifier
+                .lower()
+                .strip()
+            )
+
+            condition = (
+                User.email == identifier
+            )
+
+        else:
+            try:
+                identifier = (
+                    normalize_indian_phone(
+                        identifier
+                    )
+                )
+
+            except HTTPException:
+                raise HTTPException(
+                    status_code=(
+                        status.HTTP_401_UNAUTHORIZED
+                    ),
+                    detail="Invalid credentials",
+                )
+
+            condition = (
+                User.phone == identifier
+            )
+
+        # =========================================================
+        # LOAD USER + DELIVERY PROFILE
+        # =========================================================
+
+        result = await self.db.execute(
+            select(User)
+            .options(
+                selectinload(
+                    User.delivery_profile
+                )
+            )
+            .where(condition)
+        )
+
+        user = result.scalar_one_or_none()
+
+        # =========================================================
+        # USER EXISTS
+        # =========================================================
+
+        if not user:
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_401_UNAUTHORIZED
+                ),
+                detail="Invalid credentials",
+            )
+
+        # =========================================================
+        # PASSWORD
+        # =========================================================
+
+        if not verify_password(
+            password,
+            user.password_hash,
+        ):
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_401_UNAUTHORIZED
+                ),
+                detail="Invalid credentials",
+            )
+
+        # =========================================================
+        # ROLE
+        # =========================================================
+
+        if user.role != "DELIVERY_PARTNER":
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_403_FORBIDDEN
+                ),
+                detail=(
+                    "Delivery partner access required"
+                ),
+            )
+
+        # =========================================================
+        # ACTIVE ACCOUNT
+        # =========================================================
+
+        if not user.is_active:
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_403_FORBIDDEN
+                ),
+                detail=(
+                    "Delivery account is disabled"
+                ),
+            )
+
+        # =========================================================
+        # VERIFIED ACCOUNT
+        # =========================================================
+
+        if not user.is_verified:
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_403_FORBIDDEN
+                ),
+                detail=(
+                    "Delivery account is not verified"
+                ),
+            )
+
+        # =========================================================
+        # DELIVERY PROFILE
+        # =========================================================
+
+        profile = user.delivery_profile
+
+        if profile is None:
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_403_FORBIDDEN
+                ),
+                detail=(
+                    "Delivery partner profile not found"
+                ),
+            )
+
+        # =========================================================
+        # ADMIN APPROVAL
+        # =========================================================
+
+        if not profile.is_approved:
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_403_FORBIDDEN
+                ),
+                detail=(
+                    "Delivery account is awaiting "
+                    "admin approval"
+                ),
+            )
+
+        # =========================================================
+        # CREATE NORMAL GRAMAGO AUTH SESSION
+        # =========================================================
+
+        auth_data = (
+            await self._create_auth_session(
+                user
+            )
+        )
+
+        await self.db.commit()
+
+        await self.db.refresh(
+            user
+        )
+
+        # Reload relationship after commit/refresh.
+        result = await self.db.execute(
+            select(User)
+            .options(
+                selectinload(
+                    User.delivery_profile
+                )
+            )
+            .where(
+                User.id == user.id
+            )
+        )
+
+        user = result.scalar_one()
+
+        return {
+            "authenticated": True,
+            "verification_required": False,
+            **auth_data,
+            "user": user,
+        }
+        
+        
+        
+

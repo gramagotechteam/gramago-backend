@@ -33,3 +33,43 @@ def normalize_indian_phone(
         )
 
     return f"+91{number}"
+
+
+
+
+
+def format_indian_phone_e164(
+    phone: str,
+) -> str:
+
+    phone = (
+        phone
+        .strip()
+        .replace(" ", "")
+        .replace("-", "")
+    )
+
+    if phone.startswith("+91"):
+        number = phone[3:]
+
+    elif phone.startswith("91") and len(phone) == 12:
+        number = phone[2:]
+
+    elif len(phone) == 10:
+        number = phone
+
+    else:
+        raise ValueError(
+            "Invalid Indian mobile number"
+        )
+
+    if (
+        len(number) != 10
+        or not number.isdigit()
+        or number[0] not in "6789"
+    ):
+        raise ValueError(
+            "Invalid Indian mobile number"
+        )
+
+    return f"+91{number}"

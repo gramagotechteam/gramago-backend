@@ -1,0 +1,391 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+Assign Delivery Partner | GramaGo Admin
+{% endblock %}
+
+{% block page_title %}
+Assign Delivery Partner
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Staggered Fade-in Animation */
+    .fade-up {
+        animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card Styling */
+    .detail-card {
+        border: none;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-card .card-header {
+        background-color: #ffffff;
+        border-bottom: 1px solid #f3f4f6;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .detail-card .card-header strong,
+    .detail-card .card-header h5 {
+        font-size: 1.05rem;
+        color: #1f2937;
+        letter-spacing: -0.3px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Form Controls */
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+        padding: 0.6rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+    .form-control:focus, .form-select:focus {
+        background-color: #ffffff;
+        border-color: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        outline: none;
+    }
+
+    /* Partner Selection Card */
+    .partner-card {
+        border: 1px solid #e5e7eb !important;
+        border-radius: 14px !important;
+        background-color: #ffffff;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .partner-card:hover {
+        border-color: #10b981 !important;
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.08);
+        transform: translateY(-2px);
+    }
+    .partner-card:has(input[type="radio"]:checked) {
+        border-color: #10b981 !important;
+        background-color: #fdfdfd;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    }
+
+    /* Soft Badges */
+    .badge-soft {
+        padding: 0.4em 0.8em;
+        font-weight: 600;
+        font-size: 0.75rem;
+        letter-spacing: 0.3px;
+        border-radius: 6px;
+    }
+    .badge-soft-success { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .badge-soft-warning { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge-soft-primary { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-soft-danger { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge-soft-secondary { background-color: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+
+    .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        color: #6b7280;
+    }
+</style>
+
+{% if request.query_params.get('error') %}
+<div class="alert alert-danger alert-dismissible fade show mb-4 fade-up" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ request.query_params.get('error') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 fade-up">
+    <div>
+        <h4 class="mb-1 fw-bold text-dark">
+            Assign Delivery Partner
+        </h4>
+        <small class="text-muted">
+            Select a delivery partner for order <strong class="text-dark font-monospace">#{{ order.order_number }}</strong>
+        </small>
+    </div>
+
+    <a href="/admin/delivery-assignments/ready" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm d-inline-flex align-items-center gap-2 text-decoration-none">
+        <i class="bi bi-arrow-left"></i> Back to Ready Orders
+    </a>
+</div>
+
+<div class="row g-4">
+
+    <!-- ================================================= -->
+    <!-- LEFT: ORDER INFORMATION -->
+    <!-- ================================================= -->
+    <div class="col-xl-4 fade-up delay-1">
+
+        <div class="detail-card mb-4">
+            <div class="card-header">
+                <strong><i class="bi bi-receipt text-success"></i> Order Information</strong>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <span class="stat-label mb-1">Order Number</span>
+                    <div class="fw-bold font-monospace fs-5 text-success">{{ order.order_number }}</div>
+                </div>
+
+                <hr class="text-muted opacity-25">
+
+                <div class="mb-3">
+                    <span class="stat-label mb-1">Customer</span>
+                    <div class="fw-semibold text-dark">{{ order.delivery_full_name }}</div>
+                    <div class="text-muted small"><i class="bi bi-telephone me-1"></i>{{ order.delivery_phone }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <span class="stat-label mb-1">Delivery Address</span>
+                    <div class="text-secondary small mt-1 lh-base">
+                        {% if order.delivery_house_no %}{{ order.delivery_house_no }}, {% endif %}
+                        {% if order.delivery_street %}{{ order.delivery_street }}, {% endif %}
+                        {{ order.delivery_village_town }}<br>
+                        {% if order.delivery_mandal %}{{ order.delivery_mandal }}, {% endif %}
+                        {{ order.delivery_district }}, {{ order.delivery_state }} - <strong>{{ order.delivery_pincode }}</strong>
+                    </div>
+                </div>
+
+                {% if order.delivery_landmark %}
+                <div class="mb-3">
+                    <span class="stat-label mb-1">Landmark</span>
+                    <div class="text-secondary small"><i class="bi bi-signpost-split text-primary me-1"></i>{{ order.delivery_landmark }}</div>
+                </div>
+                {% endif %}
+
+                <hr class="text-muted opacity-25">
+
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Amount</span>
+                    <strong class="text-dark">₹{{ "%.2f" | format(order.total_amount) }}</strong>
+                </div>
+
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Payment</span>
+                    {% if order.payment_status == "PAID" %}
+                        <span class="badge-soft badge-soft-success">Paid</span>
+                    {% else %}
+                        <span class="badge-soft badge-soft-warning">{{ order.payment_status }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted small">Status</span>
+                    {% if order.order_status == "READY_FOR_PICKUP" %}
+                        <span class="badge-soft badge-soft-success">Ready for Pickup</span>
+                    {% else %}
+                        <span class="badge-soft badge-soft-primary">Packed</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if order.customer_note %}
+        <div class="detail-card">
+            <div class="card-header">
+                <strong><i class="bi bi-chat-left-text text-warning"></i> Customer Note</strong>
+            </div>
+            <div class="card-body p-4 small text-secondary">
+                {{ order.customer_note }}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- ================================================= -->
+    <!-- RIGHT: PARTNER SELECTION -->
+    <!-- ================================================= -->
+    <div class="col-xl-8 fade-up delay-2">
+
+        <form method="post" action="/admin/delivery-assignments/{{ order.id }}/assign" id="assignForm">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token(request) }}">
+
+            <div class="detail-card">
+                <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <strong class="text-dark d-flex align-items-center gap-2 mb-1">
+                            <i class="bi bi-bicycle text-success"></i> Select Delivery Partner
+                        </strong>
+                        <small class="text-muted">Online partners sorted by current active delivery workload.</small>
+                    </div>
+                    <span class="badge-soft badge-soft-success">
+                        {{ partner_rows | length }} online
+                    </span>
+                </div>
+
+                <div class="card-body p-4">
+
+                    {% if partner_rows %}
+                    <div class="row g-3 mb-4">
+                        {% for item in partner_rows %}
+                        {% set partner = item.partner %}
+                        {% set profile = item.profile %}
+                        {% set active_count = item.active_delivery_count %}
+
+                        <div class="col-lg-6">
+                            <label class="card h-100 partner-card p-3 d-flex flex-column justify-content-between">
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="pt-1">
+                                        <input
+                                            class="form-check-input"
+                                            type="radio"
+                                            name="delivery_partner_id"
+                                            value="{{ partner.id }}"
+                                            required
+                                        >
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start gap-2">
+                                            <div>
+                                                <h6 class="fw-bold text-dark mb-0">{{ partner.full_name }}</h6>
+                                                <span class="small text-muted"><i class="bi bi-telephone me-1"></i>{{ partner.phone }}</span>
+                                            </div>
+                                            <span class="badge-soft badge-soft-success">Online</span>
+                                        </div>
+
+                                        <hr class="my-2 text-muted opacity-25">
+
+                                        <div class="row g-2 small text-secondary">
+                                            <div class="col-6">
+                                                <span class="text-muted d-block" style="font-size: 0.7rem; text-transform: uppercase;">Vehicle</span>
+                                                <span class="fw-medium text-dark">{{ profile.vehicle_type or "—" }}</span>
+                                            </div>
+                                            <div class="col-6">
+                                                <span class="text-muted d-block" style="font-size: 0.7rem; text-transform: uppercase;">Number</span>
+                                                <span class="font-monospace text-dark">{{ profile.vehicle_number or "—" }}</span>
+                                            </div>
+                                            <div class="col-12 mt-2">
+                                                <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded-2 border">
+                                                    <span class="text-muted">Active Deliveries</span>
+                                                    {% if active_count == 0 %}
+                                                        <span class="badge bg-success text-white px-2 py-0.5 rounded">0 active</span>
+                                                    {% elif active_count <= 2 %}
+                                                        <span class="badge bg-warning text-dark px-2 py-0.5 rounded">{{ active_count }} active</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger text-white px-2 py-0.5 rounded">{{ active_count }} active</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% if profile.last_location_at %}
+                                            <div class="col-12 text-muted mt-1" style="font-size: 0.75rem;">
+                                                <i class="bi bi-clock me-1"></i> GPS: {{ profile.last_location_at | india_time }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold text-secondary small text-uppercase mb-2">Delivery Note (Optional)</label>
+                        <textarea
+                            name="delivery_note"
+                            class="form-control"
+                            rows="3"
+                            maxlength="500"
+                            placeholder="Instructions for the delivery partner (e.g. call before arriving)..."
+                        ></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-3 pt-3 border-top">
+                        <a href="/admin/delivery-assignments/ready" class="btn btn-light px-4 py-2 border text-decoration-none">
+                            Cancel
+                        </a>
+                        <button type="button" class="btn btn-success px-4 py-2 fw-semibold shadow-sm" onclick="promptAssign(event);">
+                            <i class="bi bi-person-check-fill me-1"></i> Assign Delivery Partner
+                        </button>
+                    </div>
+
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="p-4 bg-light rounded-circle mb-3 d-inline-block text-muted">
+                            <i class="bi bi-bicycle fs-1"></i>
+                        </div>
+                        <h5 class="text-dark fw-bold">No online delivery partners</h5>
+                        <p class="text-muted small mb-4">A delivery partner must be active, approved, and online before an order can be assigned.</p>
+                        <a href="/admin/delivery-partners" class="btn btn-outline-success rounded-pill px-4">
+                            View Delivery Partners
+                        </a>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </form>
+
+    </div>
+
+</div>
+
+<div class="modal fade" id="assignConfirmModal" tabindex="-1" aria-labelledby="assignConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title text-success fw-bold d-flex align-items-center gap-2" id="assignConfirmModalLabel">
+                    <i class="bi bi-person-plus-fill fs-4"></i> Confirm Assignment
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4 text-dark">
+                Are you sure you want to assign this order to the selected delivery partner?
+            </div>
+            <div class="modal-footer border-top-0 pt-0">
+                <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success rounded-3 px-4" id="executeAssignBtn">Yes, Assign</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let assignModal = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        assignModal = new bootstrap.Modal(document.getElementById('assignConfirmModal'));
+        
+        document.getElementById('executeAssignBtn').addEventListener('click', function() {
+            document.getElementById('assignForm').submit();
+        });
+    });
+
+    function promptAssign(event) {
+        const form = document.getElementById('assignForm');
+        if (form.checkValidity()) {
+            assignModal.show();
+        } else {
+            form.reportValidity();
+        }
+    }
+</script>
+{% endblock %}

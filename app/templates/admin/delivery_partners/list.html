@@ -1,0 +1,257 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+Delivery Partners | GramaGo Admin
+{% endblock %}
+
+{% block page_title %}
+Delivery Partners
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Staggered Fade-in Animation */
+    .fade-up {
+        animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card & Table Enhancements */
+    .table-card {
+        border: none;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    .table > :not(caption) > * > * {
+        padding: 1.25rem 1.5rem;
+        border-bottom-color: #f3f4f6;
+        vertical-align: middle;
+    }
+
+    .table thead th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+        background-color: #f9fafb;
+        border-bottom: none;
+        white-space: nowrap;
+    }
+
+    .table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    .table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    /* Soft Badges */
+    .badge-soft {
+        padding: 0.4em 0.8em;
+        font-weight: 600;
+        font-size: 0.75rem;
+        letter-spacing: 0.3px;
+        border-radius: 6px;
+    }
+    .badge-soft-success { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .badge-soft-warning { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge-soft-danger { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge-soft-primary { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-soft-secondary { background-color: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+
+    /* Action Buttons */
+    .btn-action {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 0.35rem 0.75rem;
+        transition: all 0.2s;
+    }
+</style>
+
+{% if request.query_params.get('created') == '1' %}
+<div class="alert alert-success alert-dismissible fade show mb-4 fade-up d-flex align-items-center gap-2" role="alert">
+    <i class="bi bi-check-circle-fill fs-5"></i>
+    <div>Delivery partner created successfully.</div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 fade-up">
+    <div class="d-flex align-items-center gap-3">
+        <div class="p-2 bg-primary bg-opacity-10 rounded text-primary d-none d-sm-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+            <i class="bi bi-bicycle fs-4"></i>
+        </div>
+        <div>
+            <h5 class="mb-1 fw-bold text-dark">
+                Delivery Partners
+            </h5>
+            <small class="text-muted">
+                Manage GramaGo delivery personnel and vehicles
+            </small>
+        </div>
+    </div>
+
+    <a href="/admin/delivery-partners/create" class="btn btn-success rounded-pill px-4 shadow-sm d-flex align-items-center justify-content-center gap-2">
+        <i class="bi bi-plus-lg"></i> Add Delivery Partner
+    </a>
+</div>
+
+<div class="card table-card fade-up delay-1">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Partner Details</th>
+                    <th>Contact</th>
+                    <th>Vehicle Info</th>
+                    <th>Approval</th>
+                    <th>Status</th>
+                    <th>Availability</th>
+                    <th>Account</th>
+                    <th>Created</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for partner in partners %}
+                {% set profile = partner.delivery_profile %}
+                <tr>
+                    <!-- Partner Details (Avatar, Name, ID, Email) -->
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center text-secondary" style="width: 40px; height: 40px;">
+                                <i class="bi bi-person-fill fs-5"></i>
+                            </div>
+                            <div>
+                                <strong class="text-dark d-block mb-1">
+                                    {{ partner.full_name }}
+                                </strong>
+                                <span class="badge bg-light text-secondary border border-secondary-subtle font-monospace mb-1 d-inline-block">
+                                    ID #{{ partner.id }}
+                                </span>
+                                {% if partner.email %}
+                                <div class="small text-muted d-flex align-items-center gap-1">
+                                    <i class="bi bi-envelope"></i> {{ partner.email }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Phone -->
+                    <td class="text-nowrap">
+                        <div class="text-dark fw-medium d-flex align-items-center gap-2">
+                            <i class="bi bi-telephone text-muted small"></i> {{ partner.phone }}
+                        </div>
+                    </td>
+
+                    <!-- Vehicle Info -->
+                    <td class="text-nowrap">
+                        {% if profile %}
+                            <div class="text-dark fw-medium">
+                                <i class="bi bi-truck text-muted me-1"></i> {{ profile.vehicle_type or "—" }}
+                            </div>
+                            {% if profile.vehicle_number %}
+                                <div class="small text-muted font-monospace mt-1 bg-light d-inline-block px-2 py-0.5 rounded border">
+                                    {{ profile.vehicle_number }}
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted small">—</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Approval Status -->
+                    <td>
+                        {% if profile and profile.is_approved %}
+                            <span class="badge-soft badge-soft-success d-inline-flex align-items-center gap-1">
+                                <i class="bi bi-patch-check-fill"></i> Approved
+                            </span>
+                        {% else %}
+                            <span class="badge-soft badge-soft-warning d-inline-flex align-items-center gap-1">
+                                <i class="bi bi-hourglass-split"></i> Pending
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Online Status -->
+                    <td>
+                        {% if profile and profile.is_online %}
+                            <span class="badge-soft badge-soft-success d-inline-flex align-items-center gap-1">
+                                <span class="spinner-grow spinner-grow-sm bg-success" style="width: 6px; height: 6px;" aria-hidden="true"></span> Online
+                            </span>
+                        {% else %}
+                            <span class="badge-soft badge-soft-secondary d-inline-flex align-items-center gap-1">
+                                <i class="bi bi-dash-circle"></i> Offline
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Availability -->
+                    <td>
+                        {% if profile and profile.is_available %}
+                            <span class="badge-soft badge-soft-primary d-inline-flex align-items-center gap-1">
+                                <i class="bi bi-check2-all"></i> Available
+                            </span>
+                        {% else %}
+                            <span class="badge-soft badge-soft-danger d-inline-flex align-items-center gap-1">
+                                <i class="bi bi-x-octagon"></i> Busy
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Account Active/Inactive -->
+                    <td>
+                        {% if partner.is_active %}
+                            <span class="badge-soft badge-soft-success">Active</span>
+                        {% else %}
+                            <span class="badge-soft badge-soft-danger">Inactive</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Created Date -->
+                    <td class="text-nowrap">
+                        <span class="text-muted small d-flex align-items-center gap-1">
+                            <i class="bi bi-calendar2"></i> {{ partner.created_at | india_time }}
+                        </span>
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="text-end text-nowrap">
+                        <a href="/admin/delivery-partners/{{ partner.id }}" class="btn btn-outline-primary btn-action rounded-pill px-3">
+                            View <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem;"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center py-5">
+                        <div class="d-flex flex-column align-items-center justify-content-center">
+                            <div class="p-3 bg-light rounded-circle mb-3 text-muted">
+                                <i class="bi bi-bicycle fs-3"></i>
+                            </div>
+                            <h6 class="text-dark fw-bold">No delivery partners found</h6>
+                            <p class="text-muted small mb-0">Delivery partners created by the admin will appear here.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

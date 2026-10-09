@@ -68,3 +68,7 @@ from app.models.phone_otp_session import PhoneOtpSession
 
 from app.models.commerce_setting import CommerceSetting
 
+
+
+from app.models.delivery_partner import DeliveryPartnerProfile
+from app.models.delivery_assignment import DeliveryAssignment

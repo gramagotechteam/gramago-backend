@@ -353,6 +353,7 @@ app = FastAPI(
     version="1.0.0",
 
     lifespan=lifespan,
+    debug=settings.DEBUG,   # add this line
 )
 
 
@@ -402,13 +403,15 @@ app.add_middleware(
 
 app.add_middleware(
 
-    CORSMiddleware,
+    # CORSMiddleware,
 
-    allow_origin_regex=(
-        r"http://"
-        r"(localhost|127\.0\.0\.1)"
-        r"(:\d+)?"
-    ),
+    # allow_origin_regex=(
+    #     r"http://"
+    #     r"(localhost|127\.0\.0\.1)"
+    #     r"(:\d+)?"
+    # ),
+    CORSMiddleware,
+    allow_origins=["*"],   # ✅ allow all origins
 
     allow_credentials=True,
 

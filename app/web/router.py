@@ -98,6 +98,8 @@ from app.web.routes import (
     profile,
     reports,
     commerce_settings,
+    delivery_partners,
+    delivery_assignments,
 )
 
 
@@ -168,3 +170,17 @@ admin_web_router.include_router(
 admin_web_router.include_router(
     commerce_settings.router
 )
+
+
+admin_web_router.include_router(
+    delivery_partners.router
+)
+
+
+
+
+admin_web_router.include_router(
+    delivery_assignments.router
+)
+
+

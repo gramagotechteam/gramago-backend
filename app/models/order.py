@@ -171,11 +171,29 @@ class Order(Base):
         DateTime(timezone=True),
         nullable=True,
     )
+    
+    
+    ready_for_pickup_at: Mapped[datetime | None] = mapped_column(
+    DateTime(timezone=True),
+    nullable=True,
+)
+
+    assigned_at: Mapped[datetime | None] = mapped_column(
+    DateTime(timezone=True),
+    nullable=True,
+)
+
+    picked_up_at: Mapped[datetime | None] = mapped_column(
+    DateTime(timezone=True),
+    nullable=True,
+)
 
     out_for_delivery_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
+    
+    
 
     delivered_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
@@ -218,6 +236,12 @@ class Order(Base):
         back_populates="order",
         cascade="all, delete-orphan",
     )
+    
+    delivery_assignments = relationship(
+    "DeliveryAssignment",
+    back_populates="order",
+    cascade="all, delete-orphan",
+)
 
     __table_args__ = (
         CheckConstraint(
